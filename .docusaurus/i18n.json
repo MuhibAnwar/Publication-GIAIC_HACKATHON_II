@@ -6,7 +6,7 @@
     "fr"
   ],
   "path": "i18n",
-  "currentLocale": "en",
+  "currentLocale": "fr",
   "localeConfigs": {
     "en": {
       "label": "English",
@@ -15,7 +15,7 @@
       "calendar": "gregory",
       "path": "en",
       "translate": false,
-      "url": "https://g",
+      "url": "https://spec-ai.github.io",
       "baseUrl": "/textbook/"
     },
     "es": {
@@ -25,7 +25,7 @@
       "calendar": "gregory",
       "path": "es",
       "translate": false,
-      "url": "https://g",
+      "url": "https://spec-ai.github.io",
       "baseUrl": "/textbook/es/"
     },
     "fr": {
@@ -35,7 +35,7 @@
       "calendar": "gregory",
       "path": "fr",
       "translate": false,
-      "url": "https://g",
+      "url": "https://spec-ai.github.io",
       "baseUrl": "/textbook/fr/"
     }
   }

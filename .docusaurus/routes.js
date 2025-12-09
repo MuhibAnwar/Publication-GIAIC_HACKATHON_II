@@ -3,90 +3,55 @@ import ComponentCreator from '@docusaurus/ComponentCreator';
 
 export default [
   {
-    path: '/textbook/__docusaurus/debug',
-    component: ComponentCreator('/textbook/__docusaurus/debug', '609'),
+    path: '/textbook/fr/search',
+    component: ComponentCreator('/textbook/fr/search', '5c6'),
     exact: true
   },
   {
-    path: '/textbook/__docusaurus/debug/config',
-    component: ComponentCreator('/textbook/__docusaurus/debug/config', '068'),
-    exact: true
-  },
-  {
-    path: '/textbook/__docusaurus/debug/content',
-    component: ComponentCreator('/textbook/__docusaurus/debug/content', '898'),
-    exact: true
-  },
-  {
-    path: '/textbook/__docusaurus/debug/globalData',
-    component: ComponentCreator('/textbook/__docusaurus/debug/globalData', '16f'),
-    exact: true
-  },
-  {
-    path: '/textbook/__docusaurus/debug/metadata',
-    component: ComponentCreator('/textbook/__docusaurus/debug/metadata', 'b8f'),
-    exact: true
-  },
-  {
-    path: '/textbook/__docusaurus/debug/registry',
-    component: ComponentCreator('/textbook/__docusaurus/debug/registry', '454'),
-    exact: true
-  },
-  {
-    path: '/textbook/__docusaurus/debug/routes',
-    component: ComponentCreator('/textbook/__docusaurus/debug/routes', 'c9a'),
-    exact: true
-  },
-  {
-    path: '/textbook/search',
-    component: ComponentCreator('/textbook/search', '73f'),
-    exact: true
-  },
-  {
-    path: '/textbook/docs',
-    component: ComponentCreator('/textbook/docs', '0e7'),
+    path: '/textbook/fr/docs',
+    component: ComponentCreator('/textbook/fr/docs', '02f'),
     routes: [
       {
-        path: '/textbook/docs',
-        component: ComponentCreator('/textbook/docs', 'f67'),
+        path: '/textbook/fr/docs',
+        component: ComponentCreator('/textbook/fr/docs', 'fd0'),
         routes: [
           {
-            path: '/textbook/docs',
-            component: ComponentCreator('/textbook/docs', 'f95'),
+            path: '/textbook/fr/docs',
+            component: ComponentCreator('/textbook/fr/docs', 'a5e'),
             routes: [
               {
-                path: '/textbook/docs/intro',
-                component: ComponentCreator('/textbook/docs/intro', 'e8f'),
+                path: '/textbook/fr/docs/intro',
+                component: ComponentCreator('/textbook/fr/docs/intro', '8fc'),
                 exact: true,
                 sidebar: "textbookSidebar"
               },
               {
-                path: '/textbook/docs/module1',
-                component: ComponentCreator('/textbook/docs/module1', '741'),
+                path: '/textbook/fr/docs/module1',
+                component: ComponentCreator('/textbook/fr/docs/module1', '848'),
                 exact: true,
                 sidebar: "textbookSidebar"
               },
               {
-                path: '/textbook/docs/module2',
-                component: ComponentCreator('/textbook/docs/module2', 'fdb'),
+                path: '/textbook/fr/docs/module2',
+                component: ComponentCreator('/textbook/fr/docs/module2', 'af4'),
                 exact: true,
                 sidebar: "textbookSidebar"
               },
               {
-                path: '/textbook/docs/module3',
-                component: ComponentCreator('/textbook/docs/module3', 'e26'),
+                path: '/textbook/fr/docs/module3',
+                component: ComponentCreator('/textbook/fr/docs/module3', '541'),
                 exact: true,
                 sidebar: "textbookSidebar"
               },
               {
-                path: '/textbook/docs/module4',
-                component: ComponentCreator('/textbook/docs/module4', '422'),
+                path: '/textbook/fr/docs/module4',
+                component: ComponentCreator('/textbook/fr/docs/module4', '1d7'),
                 exact: true,
                 sidebar: "textbookSidebar"
               },
               {
-                path: '/textbook/docs/overview',
-                component: ComponentCreator('/textbook/docs/overview', '1fa'),
+                path: '/textbook/fr/docs/overview',
+                component: ComponentCreator('/textbook/fr/docs/overview', '94c'),
                 exact: true,
                 sidebar: "textbookSidebar"
               }
@@ -97,8 +62,8 @@ export default [
     ]
   },
   {
-    path: '/textbook/',
-    component: ComponentCreator('/textbook/', 'd4f'),
+    path: '/textbook/fr/',
+    component: ComponentCreator('/textbook/fr/', '951'),
     exact: true
   },
   {

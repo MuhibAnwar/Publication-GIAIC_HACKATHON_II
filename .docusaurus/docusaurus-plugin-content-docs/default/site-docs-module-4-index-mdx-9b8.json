@@ -5,7 +5,7 @@
   "source": "@site/docs/module4/index.mdx",
   "sourceDirName": "module4",
   "slug": "/module4/",
-  "permalink": "/textbook/docs/module4/",
+  "permalink": "/textbook/fr/docs/module4/",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/spec-ai/textbook/tree/main/docs/module4/index.mdx",
@@ -18,6 +18,6 @@
   "sidebar": "textbookSidebar",
   "previous": {
     "title": "Module 3: The AI-Robot Brain (NVIDIA Isaac™)",
-    "permalink": "/textbook/docs/module3/"
+    "permalink": "/textbook/fr/docs/module3/"
   }
 }

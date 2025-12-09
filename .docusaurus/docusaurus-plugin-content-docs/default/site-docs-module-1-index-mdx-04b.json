@@ -5,7 +5,7 @@
   "source": "@site/docs/module1/index.mdx",
   "sourceDirName": "module1",
   "slug": "/module1/",
-  "permalink": "/textbook/docs/module1/",
+  "permalink": "/textbook/fr/docs/module1/",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/spec-ai/textbook/tree/main/docs/module1/index.mdx",
@@ -18,10 +18,10 @@
   "sidebar": "textbookSidebar",
   "previous": {
     "title": "Course Overview",
-    "permalink": "/textbook/docs/overview"
+    "permalink": "/textbook/fr/docs/overview"
   },
   "next": {
     "title": "Module 2: The Digital Twin (Gazebo & Unity)",
-    "permalink": "/textbook/docs/module2/"
+    "permalink": "/textbook/fr/docs/module2/"
   }
 }

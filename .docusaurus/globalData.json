@@ -1,43 +1,43 @@
 {
   "docusaurus-plugin-content-docs": {
     "default": {
-      "path": "/textbook/docs",
+      "path": "/textbook/fr/docs",
       "versions": [
         {
           "name": "current",
           "label": "Next",
           "isLast": true,
-          "path": "/textbook/docs",
+          "path": "/textbook/fr/docs",
           "mainDocId": "intro",
           "docs": [
             {
               "id": "intro",
-              "path": "/textbook/docs/intro",
+              "path": "/textbook/fr/docs/intro",
               "sidebar": "textbookSidebar"
             },
             {
               "id": "module1/index",
-              "path": "/textbook/docs/module1/",
+              "path": "/textbook/fr/docs/module1/",
               "sidebar": "textbookSidebar"
             },
             {
               "id": "module2/index",
-              "path": "/textbook/docs/module2/",
+              "path": "/textbook/fr/docs/module2/",
               "sidebar": "textbookSidebar"
             },
             {
               "id": "module3/index",
-              "path": "/textbook/docs/module3/",
+              "path": "/textbook/fr/docs/module3/",
               "sidebar": "textbookSidebar"
             },
             {
               "id": "module4/index",
-              "path": "/textbook/docs/module4/",
+              "path": "/textbook/fr/docs/module4/",
               "sidebar": "textbookSidebar"
             },
             {
               "id": "overview",
-              "path": "/textbook/docs/overview",
+              "path": "/textbook/fr/docs/overview",
               "sidebar": "textbookSidebar"
             }
           ],
@@ -45,7 +45,7 @@
           "sidebars": {
             "textbookSidebar": {
               "link": {
-                "path": "/textbook/docs/intro",
+                "path": "/textbook/fr/docs/intro",
                 "label": "intro"
               }
             }
