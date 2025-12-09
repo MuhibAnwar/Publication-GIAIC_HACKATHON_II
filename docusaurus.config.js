@@ -8,15 +8,15 @@ const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 const config = {
   title: 'Physical AI & Humanoid Robotics',
   tagline: 'Bridging the gap between the digital brain and the physical body',
-  url: 'https://muhibanwar.github.io', // GitHub Pages base URL (lowercase for consistency)
-  baseUrl: '/Publication-GIAIC_HACKATHON_II/', // Base URL for GitHub Pages (repository name)
+  url: 'https://publication-giac-hackathon-ii.vercel.app', // Vercel deployment URL
+  baseUrl: '/', // Root path for Vercel deployment
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
 
-  // GitHub pages deployment config
-  organizationName: 'MuhibAnwar', // Usually your GitHub org/user name.
-  projectName: 'Publication-GIAIC_HACKATHON_II', // Usually your repo name.
+  // Vercel deployment configuration
+  organizationName: '', // Not needed for Vercel
+  projectName: '', // Not needed for Vercel
   trailingSlash: false,
 
   i18n: {
