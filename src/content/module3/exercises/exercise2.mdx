@@ -1,0 +1,429 @@
+---
+title: "Exercise 2: IMU-Joint Encoder Fusion with Kalman Filter"
+description: "Implement a Kalman filter to fuse IMU and joint encoder data for improved state estimation"
+---
+
+import { Admonition } from '@site/src/components/Admonition';
+
+# Exercise 2: IMU-Joint Encoder Fusion with Kalman Filter
+
+## Learning Objectives
+
+- Understand state estimation in humanoid robotics
+- Implement a Kalman filter to fuse multiple sensor sources
+- Appreciate the benefits of sensor fusion over single-sensor approaches
+- Gain hands-on experience with ROS2 message passing for sensor data
+
+## Problem Statement
+
+In humanoid robotics, accurate state estimation is crucial for balance and motion control. Individual sensors have limitations: IMUs provide good dynamic information but drift over time, while encoders provide precise position information but no velocity/acceleration. This exercise demonstrates how to combine these sensors using a Kalman filter to produce more accurate state estimates.
+
+You will implement a discrete Kalman filter that fuses IMU orientation data with joint encoder readings to estimate the true orientation of a joint.
+
+## Starter Code Template
+
+First, create a new ROS2 package for this exercise:
+
+```bash
+# Create the package
+ros2 pkg create --build-type ament_python sensor_fusion_kalman
+cd sensor_fusion_kalman/sensor_fusion_kalman
+
+# Create the main Python file
+touch kalman_fusion_node.py
+```
+
+Here's your starter code for `kalman_fusion_node.py`:
+
+```python
+#!/usr/bin/env python3
+"""
+IMU-Joint Encoder Fusion with Kalman Filter
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu, JointState
+from geometry_msgs.msg import Vector3Stamped
+import numpy as np
+
+class KalmanFusionNode(Node):
+    def __init__(self):
+        super().__init__('kalman_fusion_node')
+        
+        # Declare and get parameters
+        self.declare_parameter('imu_topic', 'imu/data')
+        self.declare_parameter('joint_topic', 'joint_states')
+        self.declare_parameter('joint_name', 'base_joint')  # Replace with actual joint name
+        self.declare_parameter('publish_rate', 100)  # Hz
+        
+        self.imu_topic = self.get_parameter('imu_topic').value
+        self.joint_topic = self.get_parameter('joint_topic').value
+        self.joint_name = self.get_parameter('joint_name').value
+        
+        # Create subscriptions
+        self.imu_sub = self.create_subscription(Imu, self.imu_topic, self.imu_callback, 10)
+        self.joint_sub = self.create_subscription(JointState, self.joint_topic, self.joint_callback, 10)
+        
+        # Create publisher for fused estimate
+        self.estimate_pub = self.create_publisher(Vector3Stamped, 'fused_state', 10)
+        
+        # Initialize Kalman filter parameters
+        self.initialize_kalman_filter()
+        
+        # Store previous timestamps for velocity estimation
+        self.prev_joint_pos = None
+        self.prev_joint_time = None
+        
+        # Timer for publishing at fixed rate
+        publish_period = 1.0 / self.get_parameter('publish_rate').value
+        self.timer = self.create_timer(publish_period, self.publish_estimate)
+        
+        self.get_logger().info('Kalman Fusion Node Started')
+
+    def initialize_kalman_filter(self):
+        """
+        Initialize Kalman filter state and parameters
+        """
+        # TODO: Initialize state vector [position, velocity]
+        # TODO: Initialize error covariance matrix P
+        # TODO: Initialize state transition model F
+        # TODO: Initialize control input model B (zero in this case)
+        # TODO: Initialize observation model H
+        # TODO: Initialize process noise covariance Q
+        # TODO: Initialize observation noise covariance R
+        pass
+
+    def imu_callback(self, msg):
+        """
+        Process IMU data (angular velocity)
+        """
+        # Extract angular velocity from IMU
+        angular_vel = msg.angular_velocity.z  # Assuming rotation around Z-axis
+        
+        # TODO: Implement prediction step of Kalman filter
+        # Use angular velocity as control input
+        pass
+
+    def joint_callback(self, msg):
+        """
+        Process joint encoder data (position)
+        """
+        # Find the target joint
+        try:
+            idx = msg.name.index(self.joint_name)
+            position = msg.position[idx]
+            velocity = msg.velocity[idx] if idx < len(msg.velocity) else 0.0
+            
+            # TODO: Implement update step of Kalman filter
+            # Use position as observation
+            pass
+        except ValueError:
+            self.get_logger().warn(f'Joint {self.joint_name} not found in joint states')
+
+    def publish_estimate(self):
+        """
+        Publish the current state estimate
+        """
+        # TODO: Create and publish Vector3Stamped with estimate
+        pass
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = KalmanFusionNode()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Detailed Specifications
+
+1. **Implement the Kalman Filter Algorithm**:
+    - Initialize state vector `x = [position, velocity]`
+    - Set up error covariance matrix `P` (initially diagonal with high variance)
+    - Define state transition model `F` based on constant velocity model
+    - Define observation model `H` to extract position from state vector
+    - Set process noise `Q` and observation noise `R` as diagonal matrices
+    - Implement prediction and update steps
+
+2. **Handle Multi-Rate Sensor Data**:
+    - IMU data typically arrives at higher rate than joint data
+    - When only IMU data arrives, perform prediction step
+    - When joint data arrives, perform measurement update
+
+3. **Add Debugging Features**:
+    - Publish both fused estimate and raw sensor data for comparison
+    - Add ROS2 parameters to tune noise covariances during runtime
+
+## Test Cases for Validation
+
+1. **Steady-State Accuracy**:
+    - With stationary system, fused estimate should match encoder reading
+    - With constant rotation, fused estimate should track the trend better than either sensor alone
+
+2. **Dynamic Response**:
+    - During dynamic motion, fused estimate should be smoother than encoder-derived velocity
+    - Estimate should respond appropriately to changes in motion
+
+3. **Noise Filtering**:
+    - With high noise on one sensor, fused estimate should rely more on the other sensor
+
+## Hints and Common Pitfalls
+
+<Admonition type="tip" title="Kalman Filter Implementation">
+The Kalman filter consists of two main steps: prediction and update. The prediction step uses the system model to predict the next state and its uncertainty. The update step uses the new observation to correct the prediction.
+</Admonition>
+
+<Admonition type="danger" title="Matrix Inversion Pitfall">
+When computing the Kalman gain K = P * H^T * (H * P * H^T + R)^-1, ensure that the matrix H * P * H^T + R is invertible. Add a small regularization value to the diagonal if needed.
+</Admonition>
+
+- Use `numpy` for matrix operations; it's more efficient and less error-prone
+- Be careful with time synchronization between different sensor streams
+- Start with simple values for process and measurement noise, then tune based on results
+- Consider the units of your measurements when setting noise parameters
+
+## Expected Output/Visualization
+
+1. **Terminal Output**:
+    - Node starts successfully with appropriate logging
+    - Filter estimates published at specified rate
+
+2. **RViz Visualization** (if properly configured):
+    - Comparison between raw encoder data, raw IMU integration, and fused estimate
+
+3. **rqt_plot Visualization**:
+    - Fused estimate should show less noise than direct encoder differentiation
+    - Should not drift like double-integration of IMU data
+
+## Solution Template
+
+```python
+#!/usr/bin/env python3
+"""
+IMU-Joint Encoder Fusion with Kalman Filter - SOLUTION
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu, JointState
+from geometry_msgs.msg import Vector3Stamped
+import numpy as np
+
+class KalmanFusionNode(Node):
+    def __init__(self):
+        super().__init__('kalman_fusion_node')
+        
+        # Declare and get parameters
+        self.declare_parameter('imu_topic', 'imu/data')
+        self.declare_parameter('joint_topic', 'joint_states')
+        self.declare_parameter('joint_name', 'base_joint')
+        self.declare_parameter('publish_rate', 100)
+        self.declare_parameter('process_noise_position', 0.1)
+        self.declare_parameter('process_noise_velocity', 0.1)
+        self.declare_parameter('measurement_noise', 0.1)
+        
+        self.imu_topic = self.get_parameter('imu_topic').value
+        self.joint_topic = self.get_parameter('joint_topic').value
+        self.joint_name = self.get_parameter('joint_name').value
+        
+        # Create subscriptions
+        self.imu_sub = self.create_subscription(Imu, self.imu_topic, self.imu_callback, 10)
+        self.joint_sub = self.create_subscription(JointState, self.joint_topic, self.joint_callback, 10)
+        
+        # Create publishers for fused estimate and raw data
+        self.estimate_pub = self.create_publisher(Vector3Stamped, 'fused_state', 10)
+        self.raw_imu_pub = self.create_publisher(Vector3Stamped, 'raw_imu_state', 10)
+        self.raw_encoder_pub = self.create_publisher(Vector3Stamped, 'raw_encoder_state', 10)
+        
+        # Initialize Kalman filter parameters
+        self.initialize_kalman_filter()
+        
+        # Store previous timestamps for velocity estimation
+        self.prev_joint_pos = None
+        self.prev_joint_time = None
+        
+        # Timer for publishing at fixed rate
+        publish_period = 1.0 / self.get_parameter('publish_rate').value
+        self.timer = self.create_timer(publish_period, self.publish_estimate)
+        
+        self.get_logger().info('Kalman Fusion Node Started')
+
+    def initialize_kalman_filter(self):
+        """
+        Initialize Kalman filter state and parameters
+        """
+        # State vector: [position, velocity]
+        self.x = np.array([[0.0], [0.0]], dtype=np.float64)
+        
+        # Error covariance matrix P
+        self.P = np.eye(2, dtype=np.float64) * 1000.0  # High initial uncertainty
+        
+        # State transition model F (constant velocity model)
+        self.dt = 0.01  # Time step, will be updated based on IMU rate
+        self.F = np.array([[1.0, self.dt],
+                           [0.0, 1.0]], dtype=np.float64)
+        
+        # Control input model B (zero in this case, since we use angular velocity directly)
+        self.B = np.array([[0.5 * self.dt**2], [self.dt]], dtype=np.float64)
+        
+        # Observation model H (we only measure position)
+        self.H = np.array([[1.0, 0.0]], dtype=np.float64)
+        
+        # Process noise covariance Q
+        q_pos = self.get_parameter('process_noise_position').value
+        q_vel = self.get_parameter('process_noise_velocity').value
+        self.Q = np.array([[q_pos, 0.0],
+                           [0.0, q_vel]], dtype=np.float64)
+        
+        # Measurement noise covariance R
+        r_meas = self.get_parameter('measurement_noise').value
+        self.R = np.array([[r_meas]], dtype=np.float64)
+        
+        # Sensor data storage
+        self.angular_velocity = 0.0
+        self.last_imu_time = None
+
+    def imu_callback(self, msg):
+        """
+        Process IMU data (angular velocity)
+        """
+        # Get current time
+        current_time = self.get_clock().now().nanoseconds / 1e9
+        
+        # Update time step if possible
+        if self.last_imu_time is not None:
+            self.dt = current_time - self.last_imu_time
+            # Update state transition matrix with new dt
+            self.F = np.array([[1.0, self.dt],
+                               [0.0, 1.0]], dtype=np.float64)
+            self.B = np.array([[0.5 * self.dt**2], [self.dt]], dtype=np.float64)
+        
+        self.last_imu_time = current_time
+        
+        # Extract angular velocity from IMU
+        self.angular_velocity = msg.angular_velocity.z  # Assuming rotation around Z-axis
+        
+        # Perform prediction step using angular velocity as control input
+        self.x = np.dot(self.F, self.x) + np.dot(self.B, np.array([[self.angular_velocity]]))
+        
+        # Update error covariance
+        self.P = np.dot(np.dot(self.F, self.P), self.F.T) + self.Q
+
+    def joint_callback(self, msg):
+        """
+        Process joint encoder data (position)
+        """
+        # Find the target joint
+        try:
+            idx = msg.name.index(self.joint_name)
+            position = msg.position[idx]
+            
+            # Perform update step using position measurement
+            # Innovation (measurement residual)
+            y = np.array([[position]]) - np.dot(self.H, self.x)
+            
+            # Innovation covariance
+            S = np.dot(np.dot(self.H, self.P), self.H.T) + self.R
+            
+            # Kalman gain
+            K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
+            
+            # Update state estimate
+            self.x = self.x + np.dot(K, y)
+            
+            # Update error covariance
+            I = np.eye(len(self.x))
+            self.P = np.dot((I - np.dot(K, self.H)), self.P)
+            
+            # Publish raw encoder data for comparison
+            raw_msg = Vector3Stamped()
+            raw_msg.header.stamp = self.get_clock().now().to_msg()
+            raw_msg.header.frame_id = 'raw_encoder'
+            raw_msg.vector.x = position
+            raw_msg.vector.y = 0.0  # We'll calculate velocity separately if needed
+            self.raw_encoder_pub.publish(raw_msg)
+            
+        except ValueError:
+            self.get_logger().warn(f'Joint {self.joint_name} not found in joint states')
+
+    def publish_estimate(self):
+        """
+        Publish the current state estimate
+        """
+        # Create and publish Vector3Stamped with estimate
+        estimate_msg = Vector3Stamped()
+        estimate_msg.header.stamp = self.get_clock().now().to_msg()
+        estimate_msg.header.frame_id = 'fused_state'
+        estimate_msg.vector.x = float(self.x[0, 0])  # Position
+        estimate_msg.vector.y = float(self.x[1, 0])  # Velocity
+        estimate_msg.vector.z = float(self.P[0, 0])  # Position uncertainty
+        
+        self.estimate_pub.publish(estimate_msg)
+        
+        # Also publish raw IMU data for comparison
+        raw_imu_msg = Vector3Stamped()
+        raw_imu_msg.header.stamp = self.get_clock().now().to_msg()
+        raw_imu_msg.header.frame_id = 'raw_imu'
+        raw_imu_msg.vector.x = self.angular_velocity
+        self.raw_imu_pub.publish(raw_imu_msg)
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = KalmanFusionNode()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Dependencies and Setup Instructions
+
+1. **Required Packages**:
+    ```bash
+    pip3 install numpy
+    sudo apt install ros-humble-tf-transformations
+    ```
+
+2. **Package.xml additions**:
+    ```xml
+    <depend>sensor_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>rclpy</depend>
+    ```
+
+3. **Setup.py additions**:
+    ```python
+    entry_points={
+        'console_scripts': [
+            'kalman_fusion_node = sensor_fusion_kalman.kalman_fusion_node:main',
+        ],
+    },
+    ```
+
+## Running the Exercise
+
+1. Build your package: `colcon build --packages-select sensor_fusion_kalman`
+2. Source your workspace: `source install/setup.bash`
+3. In one terminal, run a simulation that provides IMU and joint state data
+4. In another terminal, run: `ros2 run sensor_fusion_kalman kalman_fusion_node`
+5. Visualize the results using `rqt_plot` to compare fused vs. raw data:
+   - `rqt_plot /fused_state/vector/x` vs `/raw_encoder_state/vector/x`
+   - Compare the smoothness and accuracy of the fused estimate
+
+This exercise demonstrates the core principle of sensor fusion in humanoid robotics, which is essential for stable operation in real-world environments.

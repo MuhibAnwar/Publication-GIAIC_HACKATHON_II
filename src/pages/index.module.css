@@ -1,0 +1,290 @@
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+.heroBanner {
+  padding: 4rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroLogo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.logoImage {
+  height: 60px;
+  max-width: 200px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 2rem;
+  }
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.buttons .button {
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.buttons .button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+.heroVisual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.robotIllustration {
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+  animation: floatAndRotate 6s ease-in-out infinite, pulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes floatAndRotate {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-10px) rotate(-1deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    filter: drop-shadow(0 0 10px rgba(37, 117, 252, 0.4));
+  }
+  100% {
+    filter: drop-shadow(0 0 20px rgba(37, 117, 252, 0.7));
+  }
+}
+
+.robotIllustration .robotBody {
+  animation: bodyGlow 4s ease-in-out infinite alternate;
+}
+
+@keyframes bodyGlow {
+  0% {
+    stroke: #444;
+    stroke-width: 2;
+  }
+  100% {
+    stroke: #2575fc;
+    stroke-width: 3;
+  }
+}
+
+.aboutSection {
+  padding: 4rem 0;
+  background-color: #f9f9f9;
+}
+
+.modulesSection {
+  padding: 4rem 0;
+  background-color: #ffffff;
+}
+
+.modulesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 2.5rem;
+}
+
+.resourcesSection {
+  padding: 4rem 0;
+  background-color: #f9f9f9;
+}
+
+.quoteSection {
+  padding: 4rem 0;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  margin: 3rem 0;
+}
+
+.mainTitle {
+  margin-bottom: 2rem;
+  font-size: 2.5rem;
+  color: #222;
+}
+
+.description {
+  font-size: 1.2rem;
+  color: #555;
+  margin-bottom: 3rem;
+}
+
+.sectionTitle {
+  margin-bottom: 3rem;
+  font-size: 2rem;
+  color: #222;
+}
+
+.moduleCard {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.moduleCard:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.moduleIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.moduleLink {
+  margin-top: auto;
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  text-align: center;
+  border: none;
+}
+
+.moduleLink:hover {
+  background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+.quoteBox {
+  background: white;
+  border-radius: 12px;
+  padding: 2.5rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  color: #333;
+}
+
+.quoteText {
+  font-size: 1.3rem;
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding: 0 1rem;
+}
+
+.quoteText:before,
+.quoteText:after {
+  content: "\"";
+  font-size: 3rem;
+  color: rgba(0,0,0,0.1);
+  position: absolute;
+}
+
+.quoteText:before {
+  top: -20px;
+  left: -10px;
+}
+
+.quoteText:after {
+  bottom: -40px;
+  right: -10px;
+  transform: rotate(180deg);
+}
+
+.quoteAuthor {
+  font-weight: bold;
+  color: #007acc;
+  margin: 0;
+}
+
+.resourceCard {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.resourceLink {
+  display: inline-block;
+  margin-top: auto;
+  padding: 0.5rem 1rem;
+  background-color: #f0f8ff;
+  color: #2575fc;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.resourceLink:hover {
+  background-color: #e1f0ff;
+  color: #005ce6;
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    text-align: center;
+  }
+  
+  .heroVisual {
+    margin-top: 2rem;
+  }
+  
+  .quoteText {
+    font-size: 1.1rem;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .buttons {
+    flex-direction: column;
+  }
+  
+  .moduleCard {
+    margin-bottom: 2rem;
+  }
+}

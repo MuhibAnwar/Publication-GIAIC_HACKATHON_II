@@ -1,0 +1,27 @@
+{
+  "id": "module3/index",
+  "title": "Module 3: The AI-Robot Brain (NVIDIA Isaac™)",
+  "description": "Advanced perception and training using NVIDIA Isaac platform",
+  "source": "@site/docs/module3/index.mdx",
+  "sourceDirName": "module3",
+  "slug": "/module3/",
+  "permalink": "/textbook/docs/module3/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/spec-ai/textbook/tree/main/docs/module3/index.mdx",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Module 3: The AI-Robot Brain (NVIDIA Isaac™)",
+    "description": "Advanced perception and training using NVIDIA Isaac platform"
+  },
+  "sidebar": "textbookSidebar",
+  "previous": {
+    "title": "Module 2: The Digital Twin (Gazebo & Unity)",
+    "permalink": "/textbook/docs/module2/"
+  },
+  "next": {
+    "title": "Module 4: Vision-Language-Action (VLA)",
+    "permalink": "/textbook/docs/module4/"
+  }
+}

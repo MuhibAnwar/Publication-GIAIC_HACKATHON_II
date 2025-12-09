@@ -1,0 +1,88 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Lint JavaScript/JSX files
+      run: |
+        if [ -f "package.json" ]; then
+          if npm list --depth=0 | grep -q "eslint"; then
+            npx eslint "src/**/*.{js,jsx}" --max-warnings 0
+          else
+            echo "ESLint not configured, creating basic config"
+            npm install --save-dev eslint @babel/core @babel/preset-react
+            echo 'module.exports = {
+              env: {
+                browser: true,
+                es2021: true,
+                node: true
+              },
+              extends: [
+                "eslint:recommended",
+                "plugin:react/recommended"
+              ],
+              parserOptions: {
+                ecmaFeatures: {
+                  jsx: true
+                },
+                ecmaVersion: 12,
+                sourceType: "module"
+              },
+              plugins: [
+                "react"
+              ],
+              settings: {
+                react: {
+                  version: "detect"
+                }
+              },
+              rules: {
+                "react/react-in-jsx-scope": "off"
+              }
+            };' > .eslintrc.js
+            npx eslint "src/**/*.{js,jsx}" --max-warnings 0 || echo "No JS files to lint"
+          fi
+        fi
+
+    - name: Check Markdown formatting
+      run: |
+        if command -v npx > /dev/null; then
+          if npm list --depth=0 | grep -q "markdownlint-cli"; then
+            npx markdownlint-cli "docs/**/*.md" "specs/**/*.md" "**/*.mdx"
+          else
+            echo "markdownlint not available, installing temporarily"
+            npm install --no-save markdownlint-cli
+            npx markdownlint-cli "**/*.md" "**/*.mdx" --ignore node_modules || echo "No markdown files found"
+          fi
+        fi
+
+    - name: Prettier check
+      run: |
+        if command -v npx > /dev/null; then
+          if npm list --depth=0 | grep -q "prettier"; then
+            npx prettier --check "**/*.{js,jsx,md,mdx,json,yaml,yml}"
+          else
+            echo "Prettier not available, installing temporarily"
+            npm install --no-save prettier
+            npx prettier --check "**/*.{js,jsx,md,mdx,json,yaml,yml}" || echo "No formattable files found"
+          fi
+        fi

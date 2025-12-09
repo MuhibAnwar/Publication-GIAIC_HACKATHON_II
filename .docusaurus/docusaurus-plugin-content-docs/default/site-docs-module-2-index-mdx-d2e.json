@@ -1,0 +1,27 @@
+{
+  "id": "module2/index",
+  "title": "Module 2: The Digital Twin (Gazebo & Unity)",
+  "description": "Physics simulation and environment building for humanoid robotics",
+  "source": "@site/docs/module2/index.mdx",
+  "sourceDirName": "module2",
+  "slug": "/module2/",
+  "permalink": "/textbook/docs/module2/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/spec-ai/textbook/tree/main/docs/module2/index.mdx",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Module 2: The Digital Twin (Gazebo & Unity)",
+    "description": "Physics simulation and environment building for humanoid robotics"
+  },
+  "sidebar": "textbookSidebar",
+  "previous": {
+    "title": "Module 1: The Robotic Nervous System (ROS 2)",
+    "permalink": "/textbook/docs/module1/"
+  },
+  "next": {
+    "title": "Module 3: The AI-Robot Brain (NVIDIA Isaac™)",
+    "permalink": "/textbook/docs/module3/"
+  }
+}

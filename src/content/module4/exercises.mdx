@@ -1,0 +1,1673 @@
+---
+title: "Module 4 Exercises: Vision-Language-Action (VLA)"
+description: "Chapter problems and projects for Module 4"
+---
+
+# Module 4 Exercises: Vision-Language-Action (VLA)
+
+## Exercise 4.1: OpenAI Whisper Integration
+
+**Objective:** Integrate OpenAI Whisper for voice command recognition in a robotic system.
+
+### Problem
+Implement a voice command recognition system using OpenAI Whisper that processes audio input and converts it to text commands for a robot.
+
+### Implementation Requirements
+1. Set up audio input pipeline
+2. Integrate Whisper for speech-to-text conversion
+3. Implement command parsing from recognized text
+4. Test with various voice commands
+5. Handle errors and edge cases gracefully
+
+### Solution
+Voice command processing implementation:
+```python
+import pyaudio
+import wave
+import whisper
+import threading
+import queue
+import rospy
+from std_msgs.msg import String
+from sensor_msgs.msg import Image
+import time
+
+class WhisperVoiceProcessor:
+    def __init__(self):
+        rospy.init_node('whisper_voice_processor')
+        
+        # Audio configuration
+        self.rate = 16000  # Sample rate
+        self.chunk = 1024  # Audio chunk size
+        self.format = pyaudio.paInt16
+        self.channels = 1
+        self.record_seconds = 5  # Max recording time
+        
+        # Initialize Whisper model
+        rospy.loginfo("Loading Whisper model...")
+        self.model = whisper.load_model("base")  # Use "small" or "medium" for better accuracy
+        
+        # Publisher for recognized commands
+        self.command_pub = rospy.Publisher('/voice_commands', String, queue_size=10)
+        
+        # Initialize audio interface
+        self.audio = pyaudio.PyAudio()
+        
+        # Threading for continuous audio processing
+        self.audio_queue = queue.Queue()
+        self.is_listening = False
+        
+        # Wake word detection (simple approach)
+        self.wake_word = "robot"
+        
+        rospy.loginfo("Whisper Voice Processor initialized")
+    
+    def start_listening(self):
+        """Start continuous listening for voice commands"""
+        self.is_listening = True
+        audio_thread = threading.Thread(target=self._audio_capture_loop)
+        audio_thread.daemon = True
+        audio_thread.start()
+        
+        processing_thread = threading.Thread(target=self._command_processing_loop)
+        processing_thread.daemon = True
+        processing_thread.start()
+    
+    def stop_listening(self):
+        """Stop the listening process"""
+        self.is_listening = False
+    
+    def _audio_capture_loop(self):
+        """Capture audio in a separate thread"""
+        stream = self.audio.open(
+            format=self.format,
+            channels=self.channels,
+            rate=self.rate,
+            input=True,
+            frames_per_buffer=self.chunk
+        )
+        
+        rospy.loginfo("Started audio capture")
+        
+        while self.is_listening:
+            # Capture audio data
+            frames = []
+            
+            # Record for specified duration
+            for i in range(0, int(self.rate / self.chunk * self.record_seconds)):
+                if not self.is_listening:
+                    break
+                data = stream.read(self.chunk)
+                frames.append(data)
+                
+                # Check if we have a potential command in the buffer
+                # For simplicity, we'll process every 3 seconds of audio
+                if i % int(self.rate / self.chunk * 3) == 0 and i > 0:
+                    # Put audio frames in queue for processing
+                    self.audio_queue.put(frames.copy())
+                    frames = []  # Reset frames for next capture
+        
+        stream.stop_stream()
+        stream.close()
+        rospy.loginfo("Audio capture stopped")
+    
+    def _command_processing_loop(self):
+        """Process audio commands in a separate thread"""
+        while self.is_listening or not self.audio_queue.empty():
+            try:
+                # Get audio frames from queue
+                frames = self.audio_queue.get(timeout=1.0)
+                
+                if frames:
+                    # Save to temporary file for Whisper processing
+                    filename = self._save_audio_to_wav(frames)
+                    
+                    # Transcribe audio using Whisper
+                    result = self.model.transcribe(filename)
+                    text = result["text"].strip()
+                    
+                    if text:
+                        rospy.loginfo(f"Recognized: {text}")
+                        
+                        # Check if command is valid (simple wake word approach)
+                        if self._is_valid_command(text):
+                            # Publish the recognized command
+                            command_msg = String()
+                            command_msg.data = self._extract_command(text)
+                            self.command_pub.publish(command_msg)
+                        else:
+                            rospy.loginfo("Command ignored - doesn't start with wake word")
+                    
+                    # Clean up temporary file
+                    import os
+                    if os.path.exists(filename):
+                        os.remove(filename)
+            
+            except queue.Empty:
+                continue
+            except Exception as e:
+                rospy.logerr(f"Error processing audio: {e}")
+    
+    def _save_audio_to_wav(self, frames):
+        """Save audio frames to a temporary WAV file"""
+        import tempfile
+        filename = tempfile.mktemp(suffix=".wav")
+        
+        wf = wave.open(filename, 'wb')
+        wf.setnchannels(self.channels)
+        wf.setsampwidth(self.audio.get_sample_size(self.format))
+        wf.setframerate(self.rate)
+        wf.writeframes(b''.join(frames))
+        wf.close()
+        
+        return filename
+    
+    def _is_valid_command(self, text):
+        """Check if the recognized text is a valid command"""
+        # Simple wake word detection
+        text_lower = text.lower()
+        return self.wake_word in text_lower
+    
+    def _extract_command(self, text):
+        """Extract the actual command part from recognized text"""
+        # Remove wake word and return the command
+        text_lower = text.lower()
+        wake_pos = text_lower.find(self.wake_word)
+        if wake_pos != -1:
+            command = text[wake_pos + len(self.wake_word):].strip()
+            if command.startswith(",") or command.startswith(":"):
+                command = command[1:].strip()
+            return command
+        return text
+    
+    def shutdown(self):
+        """Clean up resources"""
+        self.stop_listening()
+        self.audio.terminate()
+
+def main():
+    processor = WhisperVoiceProcessor()
+    
+    try:
+        processor.start_listening()
+        
+        # Keep the node running
+        rospy.spin()
+        
+    except KeyboardInterrupt:
+        rospy.loginfo("Shutting down voice processor...")
+    finally:
+        processor.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Exercise 4.2: Large Language Model Integration
+
+**Objective:** Integrate a large language model for cognitive planning in robotics.
+
+### Problem
+Implement a system that uses an LLM to translate natural language commands into sequences of robotic actions.
+
+### Implementation Requirements
+1. Set up LLM API connection (e.g., OpenAI, Anthropic)
+2. Implement cognitive planning pipeline
+3. Create robot action representation
+4. Parse LLM responses into executable actions
+5. Validate and execute planned actions
+
+### Solution
+LLM cognitive planner implementation:
+```python
+import openai
+import rospy
+from std_msgs.msg import String
+from geometry_msgs.msg import Pose, Point
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+import actionlib
+import json
+import time
+
+class LLMBehaviorPlanner:
+    def __init__(self):
+        rospy.init_node('llm_behavior_planner')
+        
+        # Initialize OpenAI API (replace with your API key)
+        openai.api_key = rospy.get_param('~openai_api_key', 'YOUR_API_KEY')
+        
+        # Subscribe to voice commands
+        self.command_sub = rospy.Subscriber('/voice_commands', String, self.command_callback)
+        
+        # Publishers for robot actions
+        self.action_pub = rospy.Publisher('/robot_actions', String, queue_size=10)
+        
+        # Action client for navigation
+        self.nav_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+        self.nav_client.wait_for_server()
+        
+        # Store robot capabilities and environment context
+        self.robot_capabilities = self._get_robot_capabilities()
+        self.environment_context = self._get_environment_context()
+        
+        rospy.loginfo("LLM Behavior Planner initialized")
+    
+    def _get_robot_capabilities(self):
+        """Define what actions the robot can perform"""
+        capabilities = {
+            "navigation": {
+                "description": "Move to specified locations",
+                "parameters": ["x", "y", "theta"]
+            },
+            "manipulation": {
+                "description": "Pick up, place, or manipulate objects",
+                "parameters": ["object_name", "action_type", "target_position"]
+            },
+            "perception": {
+                "description": "Detect and identify objects",
+                "parameters": ["object_type", "search_location"]
+            },
+            "communication": {
+                "description": "Speak or display messages",
+                "parameters": ["message", "recipient"]
+            }
+        }
+        return capabilities
+    
+    def _get_environment_context(self):
+        """Get current environment context"""
+        # In a real implementation, this would interface with perception systems
+        context = {
+            "room_layout": {
+                "objects": [
+                    {"name": "table", "location": {"x": 1.0, "y": 0.0}},
+                    {"name": "chair", "location": {"x": 2.0, "y": 0.5}},
+                    {"name": "cup", "location": {"x": 1.0, "y": 0.1}}
+                ],
+                "navigable_areas": [
+                    {"name": "main_area", "center": {"x": 0.0, "y": 0.0}, "radius": 3.0}
+                ],
+                "obstacles": []
+            },
+            "robot_state": {
+                "current_position": {"x": 0.0, "y": 0.0, "theta": 0.0},
+                "battery_level": 0.85,
+                "available_manipulators": ["left_arm", "right_arm"]
+            }
+        }
+        return context
+    
+    def command_callback(self, msg):
+        """Process incoming voice commands using LLM"""
+        command_text = msg.data
+        rospy.loginfo(f"Received command: {command_text}")
+        
+        try:
+            # Generate plan using LLM
+            plan = self._generate_plan(command_text)
+            
+            # Execute the plan
+            self._execute_plan(plan)
+            
+        except Exception as e:
+            rospy.logerr(f"Error processing command: {e}")
+            self._speak_response("Sorry, I couldn't understand that command.")
+    
+    def _generate_plan(self, command):
+        """Use LLM to generate a plan from natural language command"""
+        system_prompt = f"""
+        You are a robot task planner. The robot has these capabilities: {self.robot_capabilities}.
+        The current environment context is: {self.environment_context}.
+        
+        Your task is to convert natural language commands into sequences of executable robot actions.
+        Each action should be in JSON format with an 'action' field and appropriate parameters.
+        
+        Available actions:
+        - "move_to": Move to a position with x, y, theta coordinates
+        - "detect_object": Detect objects of type with optional location
+        - "grasp_object": Grasp an object by name with optional position
+        - "place_object": Place an object at a specific location
+        - "speak": Say a message
+        
+        Please respond ONLY with the JSON array of actions, no other text.
+        """
+        
+        user_prompt = f"Convert this command to robot actions: '{command}'"
+        
+        response = openai.ChatCompletion.create(
+            model="gpt-4",  # Use "gpt-3.5-turbo" if gpt-4 is not available
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            max_tokens=500,
+            temperature=0.1
+        )
+        
+        # Extract the plan from the response
+        plan_text = response.choices[0].message['content'].strip()
+        
+        # Remove any markdown formatting if present
+        if plan_text.startswith('```json'):
+            plan_text = plan_text[7:]  # Remove ```json
+        if plan_text.endswith('```'):
+            plan_text = plan_text[:-3]  # Remove ```
+        
+        try:
+            plan = json.loads(plan_text)
+            return plan
+        except json.JSONDecodeError:
+            rospy.logerr(f"Could not parse LLM response as JSON: {plan_text}")
+            return []
+    
+    def _execute_plan(self, plan):
+        """Execute the plan generated by the LLM"""
+        rospy.loginfo(f"Executing plan: {plan}")
+        
+        for action_step in plan:
+            action_type = action_step.get('action', '')
+            
+            if action_type == 'move_to':
+                self._execute_move_to(action_step)
+            elif action_type == 'detect_object':
+                self._execute_detect_object(action_step)
+            elif action_type == 'grasp_object':
+                self._execute_grasp_object(action_step)
+            elif action_type == 'place_object':
+                self._execute_place_object(action_step)
+            elif action_type == 'speak':
+                self._execute_speak(action_step)
+            else:
+                rospy.logwarn(f"Unknown action type: {action_type}")
+            
+            # Add a small delay between actions for safety
+            time.sleep(0.5)
+    
+    def _execute_move_to(self, action):
+        """Execute navigation action"""
+        x = action.get('x', 0.0)
+        y = action.get('y', 0.0)
+        theta = action.get('theta', 0.0)
+        
+        rospy.loginfo(f"Moving to position: ({x}, {y}, {theta})")
+        
+        # Create move base goal
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.stamp = rospy.Time.now()
+        goal.target_pose.pose.position.x = x
+        goal.target_pose.pose.position.y = y
+        goal.target_pose.pose.orientation.z = theta  # Simplified orientation
+        
+        # Send goal to navigation stack
+        self.nav_client.send_goal_and_wait(goal, execute_timeout=rospy.Duration(30.0))
+        
+        # Check if navigation was successful
+        state = self.nav_client.get_state()
+        if state == actionlib.GoalStatus.SUCCEEDED:
+            rospy.loginfo("Navigation succeeded")
+            self._speak_response("I have reached the destination.")
+        else:
+            rospy.logwarn("Navigation failed")
+            self._speak_response("I couldn't reach the destination.")
+    
+    def _execute_detect_object(self, action):
+        """Execute object detection action"""
+        object_type = action.get('object_type', 'object')
+        location = action.get('location', None)
+        
+        rospy.loginfo(f"Detecting {object_type} at {location if location else 'current area'}")
+        
+        # In a real implementation, this would call perception systems
+        # For now, we'll simulate detection
+        detected = True  # Simulated result
+        
+        if detected:
+            rospy.loginfo(f"Detected {object_type}")
+            self._speak_response(f"I found the {object_type}.")
+        else:
+            rospy.loginfo(f"No {object_type} detected")
+            self._speak_response(f"I couldn't find the {object_type}.")
+    
+    def _execute_grasp_object(self, action):
+        """Execute grasping action"""
+        object_name = action.get('object_name', 'object')
+        position = action.get('position', None)
+        
+        rospy.loginfo(f"Attempting to grasp {object_name} at {position if position else 'detected position'}")
+        
+        # In a real implementation, this would call manipulation systems
+        # For now, we'll simulate grasping
+        successful = True  # Simulated result
+        
+        if successful:
+            rospy.loginfo(f"Successfully grasped {object_name}")
+            self._speak_response(f"I have grasped the {object_name}.")
+        else:
+            rospy.logwarn(f"Failed to grasp {object_name}")
+            self._speak_response(f"I couldn't grasp the {object_name}.")
+    
+    def _execute_place_object(self, action):
+        """Execute object placement action"""
+        object_name = action.get('object_name', 'object')
+        location = action.get('location', None)
+        
+        rospy.loginfo(f"Placing {object_name} at {location if location else 'current position'}")
+        
+        # In a real implementation, this would call manipulation systems
+        # For now, we'll simulate placing
+        successful = True  # Simulated result
+        
+        if successful:
+            rospy.loginfo(f"Successfully placed {object_name}")
+            self._speak_response(f"I have placed the {object_name}.")
+        else:
+            rospy.logwarn(f"Failed to place {object_name}")
+            self._speak_response(f"I couldn't place the {object_name}.")
+    
+    def _execute_speak(self, action):
+        """Execute speech action"""
+        message = action.get('message', "Hello")
+        
+        rospy.loginfo(f"Speaking: {message}")
+        self._speak_response(message)
+    
+    def _speak_response(self, message):
+        """Speak a response (simulated)"""
+        # In a real implementation, this would interface with TTS system
+        rospy.loginfo(f"Robot says: {message}")
+        
+        # Publish to speech system if available
+        # speech_pub = rospy.Publisher('/tts_input', String, queue_size=1)
+        # speech_pub.publish(String(data=message))
+    
+    def shutdown(self):
+        """Clean up resources"""
+        rospy.loginfo("LLM Behavior Planner shutting down...")
+
+def main():
+    planner = LLMBehaviorPlanner()
+    
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        rospy.loginfo("Shutting down LLM planner...")
+    finally:
+        planner.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Exercise 4.3: Vision-Language-Action Integration
+
+**Objective:** Integrate vision, language understanding, and action execution into a cohesive system.
+
+### Problem
+Create a system that processes visual input and natural language commands to perform complex robotic tasks.
+
+### Implementation Requirements
+1. Combine perception and language understanding
+2. Implement object grounding and spatial reasoning
+3. Execute multi-step tasks based on VLA pipeline
+4. Integrate feedback mechanisms
+5. Handle ambiguous or incorrect commands
+
+### Solution
+VLA integration implementation:
+```python
+import rospy
+import cv2
+import numpy as np
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
+from std_msgs.msg import String
+from geometry_msgs.msg import PoseStamped
+import openai
+import json
+import time
+from collections import deque
+
+class VisionLanguageActionSystem:
+    def __init__(self):
+        rospy.init_node('vla_system')
+        
+        # OpenAI API setup
+        openai.api_key = rospy.get_param('~openai_api_key', 'YOUR_API_KEY')
+        
+        # CV bridge for image processing
+        self.bridge = CvBridge()
+        
+        # Subscribers and publishers
+        self.image_sub = rospy.Subscriber('/camera/rgb/image_raw', Image, self.image_callback)
+        self.command_sub = rospy.Subscriber('/voice_commands', String, self.command_callback)
+        self.navigation_pub = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=1)
+        
+        # System state
+        self.current_image = None
+        self.command_queue = deque(maxlen=10)  # Queue for processing commands
+        self.is_processing = False
+        
+        # Store recent images and commands for context
+        self.image_history = deque(maxlen=5)
+        self.command_history = deque(maxlen=5)
+        
+        rospy.loginfo("VLA System initialized")
+    
+    def image_callback(self, msg):
+        """Process incoming image data"""
+        try:
+            # Convert ROS Image message to OpenCV image
+            cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+            self.current_image = cv_image
+            self.image_history.append(cv_image)
+        except Exception as e:
+            rospy.logerr(f"Error converting image: {e}")
+    
+    def command_callback(self, msg):
+        """Process incoming commands"""
+        command = msg.data
+        rospy.loginfo(f"Received command: {command}")
+        
+        # Add to command queue
+        self.command_queue.append(command)
+        
+        # Process if not already processing
+        if not self.is_processing:
+            self.process_next_command()
+    
+    def process_next_command(self):
+        """Process the next command in the queue"""
+        if not self.command_queue or self.is_processing:
+            return
+        
+        command = self.command_queue.popleft()
+        self.is_processing = True
+        
+        # Process in a separate thread to avoid blocking
+        import threading
+        thread = threading.Thread(target=self._process_command_thread, args=(command,))
+        thread.daemon = True
+        thread.start()
+    
+    def _process_command_thread(self, command):
+        """Process command in a separate thread"""
+        try:
+            # Get the latest image for context
+            if self.current_image is not None:
+                # Encode image for API (this is a simplified approach)
+                # In practice, you would use base64 encoding or similar
+                image_description = self._describe_image(self.current_image)
+                
+                # Generate action using VLA approach
+                action_plan = self._generate_vla_action(command, image_description)
+                
+                # Execute the action plan
+                self._execute_action_plan(action_plan)
+            else:
+                rospy.logwarn("No image available for command processing")
+                self._speak_response("Please wait, I need to see the environment first.")
+        
+        except Exception as e:
+            rospy.logerr(f"Error processing command: {e}")
+            self._speak_response("I encountered an error processing your command.")
+        
+        finally:
+            self.is_processing = False
+            # Process next command if available
+            if self.command_queue:
+                rospy.sleep(0.5)  # Small delay before processing next command
+                self.process_next_command()
+    
+    def _describe_image(self, image):
+        """Create a simple description of the image for context"""
+        # This is a simplified approach - in practice, you might use computer vision models
+        # for more detailed image analysis
+        height, width, _ = image.shape
+        
+        # For demonstration, return some basic information
+        center_x, center_y = width // 2, height // 2
+        center_region = image[center_y-50:center_y+50, center_x-50:center_x+50]
+        
+        # Get basic color information
+        avg_color = np.mean(center_region, axis=(0, 1))
+        
+        description = {
+            "image_resolution": f"{width}x{height}",
+            "center_region_avg_color": avg_color.tolist(),
+            "object_detections": []  # This would be populated by object detection in a real system
+        }
+        
+        return json.dumps(description)
+    
+    def _generate_vla_action(self, command, image_context):
+        """Generate action plan using vision-language integration"""
+        system_prompt = f"""
+        You are a vision-language action (VLA) system for a humanoid robot. 
+        The robot has cameras that provide visual context about its environment.
+        
+        Image Context: {image_context}
+        
+        Your task is to interpret natural language commands in the context of the visual scene
+        and generate appropriate robot actions. Consider both the spatial relationships
+        in the scene and the semantics of the language command.
+        
+        Return your response as a JSON object with an 'actions' field containing
+        an array of action objects. Each action should have:
+        - 'type': The type of action (e.g., 'navigate', 'manipulate', 'detect', 'speak')
+        - 'target': The target of the action (object, position, etc.)
+        - 'parameters': Any additional parameters needed for the action
+        
+        Example response format:
+        {{
+            "actions": [
+                {{"type": "navigate", "target": "table", "parameters": {{"x": 1.0, "y": 0.5}}}},
+                {{"type": "detect", "target": "cup", "parameters": {{}}}},
+                {{"type": "manipulate", "target": "cup", "parameters": {{"action": "grasp"}}}}
+            ]
+        }}
+        """
+        
+        user_prompt = f"Given the image context and this command: '{command}', generate the appropriate action plan."
+        
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            max_tokens=500,
+            temperature=0.1
+        )
+        
+        # Extract the action plan from the response
+        response_text = response.choices[0].message['content'].strip()
+        
+        # Clean up markdown formatting
+        if response_text.startswith('```json'):
+            response_text = response_text[7:]
+        if response_text.endswith('```'):
+            response_text = response_text[:-3]
+        
+        try:
+            action_plan = json.loads(response_text)
+            return action_plan
+        except json.JSONDecodeError:
+            rospy.logerr(f"Could not parse VLA response: {response_text}")
+            return {"actions": []}
+    
+    def _execute_action_plan(self, action_plan):
+        """Execute the plan generated by the VLA system"""
+        actions = action_plan.get("actions", [])
+        
+        for action in actions:
+            action_type = action.get("type", "")
+            target = action.get("target", "")
+            parameters = action.get("parameters", {})
+            
+            rospy.loginfo(f"Executing action: {action_type} on {target} with {parameters}")
+            
+            if action_type == "navigate":
+                self._execute_navigation(target, parameters)
+            elif action_type == "detect":
+                self._execute_detection(target, parameters)
+            elif action_type == "manipulate":
+                self._execute_manipulation(target, parameters)
+            elif action_type == "speak":
+                self._execute_speech(target, parameters)
+            else:
+                rospy.logwarn(f"Unknown action type: {action_type}")
+    
+    def _execute_navigation(self, target, parameters):
+        """Execute navigation action"""
+        rospy.loginfo(f"Navigating toward {target}")
+        
+        # Extract target coordinates
+        x = parameters.get("x", 0.0)
+        y = parameters.get("y", 0.0)
+        
+        # Create and publish navigation goal
+        goal = PoseStamped()
+        goal.header.frame_id = "map"
+        goal.header.stamp = rospy.Time.now()
+        goal.pose.position.x = x
+        goal.pose.position.y = y
+        goal.pose.position.z = 0.0  # Assume ground level
+        goal.pose.orientation.w = 1.0  # No rotation
+        
+        self.navigation_pub.publish(goal)
+        self._speak_response(f"Moving toward the {target}.")
+        
+        # Wait for navigation to complete (simplified)
+        rospy.sleep(3.0)
+    
+    def _execute_detection(self, target, parameters):
+        """Execute detection action"""
+        rospy.loginfo(f"Detecting {target}")
+        
+        # In a real system, this would interface with perception systems
+        # For now, simulate detection
+        detected = True  # Simulated result
+        
+        if detected:
+            self._speak_response(f"I see the {target}.")
+        else:
+            self._speak_response(f"I don't see the {target} right now.")
+    
+    def _execute_manipulation(self, target, parameters):
+        """Execute manipulation action"""
+        rospy.loginfo(f"Manipulating {target}")
+        
+        # Extract action parameters
+        action = parameters.get("action", "grasp")
+        
+        # In a real system, this would interface with manipulation systems
+        # For now, simulate manipulation
+        successful = True  # Simulated result
+        
+        if successful:
+            if action == "grasp":
+                self._speak_response(f"I have grasped the {target}.")
+            elif action == "place":
+                self._speak_response(f"I have placed the {target}.")
+            else:
+                self._speak_response(f"I have {action}ed the {target}.")
+        else:
+            self._speak_response(f"I couldn't {action} the {target}.")
+    
+    def _execute_speech(self, target, parameters):
+        """Execute speech action"""
+        message = target  # In this case, the target IS the message
+        rospy.loginfo(f"Speaking: {message}")
+        self._speak_response(message)
+    
+    def _speak_response(self, message):
+        """Speak a response (simulated)"""
+        rospy.loginfo(f"Robot says: {message}")
+        # In a real system, this would interface with TTS system
+        # speech_pub = rospy.Publisher('/tts_input', String, queue_size=1)
+        # speech_pub.publish(String(data=message))
+    
+    def shutdown(self):
+        """Clean up resources"""
+        rospy.loginfo("VLA System shutting down...")
+
+def main():
+    vla_system = VisionLanguageActionSystem()
+    
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        rospy.loginfo("Shutting down VLA system...")
+    finally:
+        vla_system.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Exercise 4.4: Voice Command to Action Mapping
+
+**Objective:** Create a robust system for mapping natural language voice commands to robot actions.
+
+### Problem
+Implement a system that understands various ways of expressing commands and maps them to appropriate robot behaviors.
+
+### Implementation Requirements
+1. Implement natural language understanding for commands
+2. Handle synonymous commands and variations
+3. Implement error recovery for misunderstood commands
+4. Create command validation system
+5. Maintain conversation context
+
+### Solution
+Command mapping and understanding system:
+```python
+import rospy
+import re
+import json
+from std_msgs.msg import String
+from geometry_msgs.msg import PoseStamped
+from move_base_msgs.msg import MoveBaseGoal
+import actionlib
+import time
+from collections import defaultdict
+
+class CommandMapper:
+    def __init__(self):
+        rospy.init_node('command_mapper')
+        
+        # Subscribe to voice commands
+        self.command_sub = rospy.Subscriber('/voice_commands', String, self.command_callback)
+        
+        # Publishers
+        self.response_pub = rospy.Publisher('/robot_responses', String, queue_size=10)
+        
+        # Action clients
+        self.nav_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+        
+        # Command pattern mapping
+        self.command_patterns = {
+            'navigation': {
+                'move_to': [
+                    r'move to (?:the )?(\w+)',
+                    r'go to (?:the )?(\w+)',
+                    r'go (?:to )?(?:the )?(\w+)',
+                    r'walk to (?:the )?(\w+)',
+                    r'travel to (?:the )?(\w+)'
+                ],
+                'come_here': [
+                    r'come (?:to me|here|over)',
+                    r'come (?:here|over)',
+                    r'get over here',
+                    r'come back'
+                ]
+            },
+            'manipulation': {
+                'grasp': [
+                    r'pick up (?:the )?(\w+)',
+                    r'grab (?:the )?(\w+)',
+                    r'get (?:the )?(\w+)',
+                    r'take (?:the )?(\w+)',
+                    r'lift (?:the )?(\w+)'
+                ],
+                'place': [
+                    r'put (?:the )?(\w+) (?:on|at|to) (?:the )?(\w+)',
+                    r'place (?:the )?(\w+) (?:on|at|to) (?:the )?(\w+)',
+                    r'drop (?:the )?(\w+) (?:on|at|to) (?:the )?(\w+)'
+                ]
+            },
+            'perception': {
+                'detect': [
+                    r'find (?:the )?(\w+)',
+                    r'look for (?:the )?(\w+)',
+                    r'spot (?:the )?(\w+)',
+                    r'search for (?:the )?(\w+)',
+                    r'where is (?:the )?(\w+)',
+                    r'locate (?:the )?(\w+)'
+                ]
+            },
+            'communication': {
+                'speak': [
+                    r'say (.+)',
+                    r'tell (.+)',
+                    r'speak (.+)',
+                    r'repeat (.+)'
+                ]
+            }
+        }
+        
+        # Known locations and objects in environment
+        self.known_locations = {
+            'kitchen': {'x': 2.0, 'y': 1.0},
+            'bedroom': {'x': -1.0, 'y': 2.0},
+            'living_room': {'x': 0.0, 'y': 0.0},
+            'table': {'x': 1.0, 'y': 0.0},
+            'chair': {'x': 1.5, 'y': 0.5},
+            'couch': {'x': -1.0, 'y': 0.5}
+        }
+        
+        self.known_objects = ['cup', 'book', 'ball', 'bottle', 'phone', 'keys']
+        
+        # Conversation context
+        self.context = {
+            'last_object': None,
+            'last_location': None,
+            'user_position': {'x': 0, 'y': 0}
+        }
+        
+        rospy.loginfo("Command Mapper initialized")
+    
+    def command_callback(self, msg):
+        """Process incoming voice commands"""
+        command = msg.data.lower().strip()
+        rospy.loginfo(f"Processing command: {command}")
+        
+        # Map command to action
+        action_result = self._map_command_to_action(command)
+        
+        if action_result['success']:
+            # Execute the action
+            self._execute_action(action_result['action'], action_result['params'])
+        else:
+            # Handle unrecognized command
+            self._handle_unrecognized_command(command, action_result['suggestions'])
+    
+    def _map_command_to_action(self, command):
+        """Map natural language command to robot action"""
+        command = command.lower().strip()
+        
+        # Check each command category
+        for category, actions in self.command_patterns.items():
+            for action_type, patterns in actions.items():
+                for pattern in patterns:
+                    match = re.search(pattern, command)
+                    if match:
+                        # Extract parameters based on pattern
+                        params = self._extract_params(action_type, match.groups())
+                        
+                        # Validate parameters if needed
+                        if self._validate_params(action_type, params):
+                            return {
+                                'success': True,
+                                'action': action_type,
+                                'category': category,
+                                'params': params
+                            }
+        
+        # If no action was matched, return failure with suggestions
+        suggestions = self._generate_suggestions(command)
+        return {
+            'success': False,
+            'suggestions': suggestions
+        }
+    
+    def _extract_params(self, action_type, groups):
+        """Extract parameters from regex match groups"""
+        params = {}
+        
+        if action_type == 'move_to':
+            if len(groups) > 0 and groups[0] in self.known_locations:
+                location = groups[0]
+                params['target_location'] = location
+                params['coordinates'] = self.known_locations[location]
+        elif action_type == 'come_here':
+            params['coordinates'] = self.context['user_position']
+        elif action_type == 'grasp':
+            if len(groups) > 0:
+                object_name = groups[0]
+                if object_name in self.known_objects:
+                    params['object_name'] = object_name
+        elif action_type == 'place':
+            if len(groups) >= 2:
+                object_name = groups[0]
+                target_location = groups[1]
+                
+                if object_name in self.known_objects:
+                    params['object_name'] = object_name
+                if target_location in self.known_locations:
+                    params['target_location'] = target_location
+                    params['coordinates'] = self.known_locations[target_location]
+        elif action_type == 'detect':
+            if len(groups) > 0:
+                object_name = groups[0]
+                if object_name in self.known_objects or object_name == 'object':
+                    params['object_name'] = object_name
+        elif action_type == 'speak':
+            if len(groups) > 0:
+                params['message'] = groups[0]
+        
+        return params
+    
+    def _validate_params(self, action_type, params):
+        """Validate action parameters"""
+        if action_type == 'move_to':
+            return 'coordinates' in params
+        elif action_type in ['grasp', 'detect']:
+            return 'object_name' in params
+        elif action_type == 'place':
+            return 'object_name' in params and 'coordinates' in params
+        elif action_type == 'speak':
+            return 'message' in params
+        elif action_type == 'come_here':
+            return True
+        else:
+            return len(params) > 0
+    
+    def _generate_suggestions(self, command):
+        """Generate suggestions for unrecognized commands"""
+        suggestions = []
+        
+        # Simple keyword matching for suggestions
+        if 'move' in command or 'go' in command or 'walk' in command:
+            suggestions.append("Try: 'Go to the kitchen' or 'Move to the table'")
+        elif 'find' in command or 'look' in command or 'where' in command:
+            suggestions.append("Try: 'Find the cup' or 'Where is the book'")
+        elif 'pick' in command or 'get' in command or 'grab' in command:
+            suggestions.append("Try: 'Pick up the ball' or 'Grab the bottle'")
+        elif 'put' in command or 'place' in command:
+            suggestions.append("Try: 'Put the cup on the table'")
+        else:
+            suggestions.append("I didn't understand that command. Try saying something like 'Go to the kitchen' or 'Find the cup'.")
+        
+        return suggestions
+    
+    def _execute_action(self, action_type, params):
+        """Execute the mapped action"""
+        rospy.loginfo(f"Executing action: {action_type} with params: {params}")
+        
+        if action_type == 'move_to':
+            self._execute_navigation(params['coordinates'])
+        elif action_type == 'come_here':
+            self._execute_navigation(params['coordinates'])
+        elif action_type == 'grasp':
+            self._execute_grasp(params['object_name'])
+        elif action_type == 'place':
+            self._execute_place(params['object_name'], params['coordinates'])
+        elif action_type == 'detect':
+            self._execute_detect(params['object_name'])
+        elif action_type == 'speak':
+            self._execute_speak(params['message'])
+        else:
+            rospy.logwarn(f"Unknown action type: {action_type}")
+    
+    def _execute_navigation(self, coordinates):
+        """Execute navigation action"""
+        rospy.loginfo(f"Navigating to coordinates: ({coordinates['x']}, {coordinates['y']})")
+        
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.stamp = rospy.Time.now()
+        goal.target_pose.pose.position.x = coordinates['x']
+        goal.target_pose.pose.position.y = coordinates['y']
+        goal.target_pose.pose.orientation.w = 1.0  # No rotation
+        
+        # Wait for action server
+        if not self.nav_client.wait_for_server(rospy.Duration(5.0)):
+            rospy.logerr("Navigation server not available")
+            self._speak_response("I cannot navigate right now.")
+            return
+        
+        # Send navigation goal
+        self.nav_client.send_goal(goal)
+        finished_within_time = self.nav_client.wait_for_result(rospy.Duration(30.0))
+        
+        if not finished_within_time:
+            self.nav_client.cancel_goal()
+            rospy.logerr("Navigation took too long")
+            self._speak_response("I couldn't reach the destination in time.")
+        else:
+            state = self.nav_client.get_state()
+            if state == actionlib.GoalStatus.SUCCEEDED:
+                rospy.loginfo("Navigation succeeded")
+                self._speak_response("I have reached the destination.")
+            else:
+                rospy.logwarn("Navigation failed")
+                self._speak_response("I couldn't reach the destination.")
+    
+    def _execute_grasp(self, object_name):
+        """Execute grasping action"""
+        rospy.loginfo(f"Attempting to grasp: {object_name}")
+        
+        # In a real system, this would interface with manipulation stack
+        # For simulation, assume success after a short delay
+        rospy.sleep(2.0)
+        
+        rospy.loginfo(f"Successfully grasped: {object_name}")
+        self._speak_response(f"I have grasped the {object_name}.")
+        
+        # Update context
+        self.context['last_object'] = object_name
+    
+    def _execute_place(self, object_name, coordinates):
+        """Execute placing action"""
+        rospy.loginfo(f"Placing {object_name} at {coordinates}")
+        
+        # In a real system, this would interface with manipulation stack
+        # For simulation, assume success after a short delay
+        rospy.sleep(2.0)
+        
+        rospy.loginfo(f"Successfully placed: {object_name}")
+        self._speak_response(f"I have placed the {object_name}.")
+        
+        # Update context
+        self.context['last_object'] = None
+    
+    def _execute_detect(self, object_name):
+        """Execute detection action"""
+        rospy.loginfo(f"Detecting: {object_name}")
+        
+        # In a real system, this would interface with perception stack
+        # For simulation, assume object is detected after a short delay
+        rospy.sleep(1.5)
+        
+        # Simulate detection result
+        found = True  # In real system, this would come from perception
+        
+        if found:
+            rospy.loginfo(f"Found {object_name}")
+            self._speak_response(f"I found the {object_name}.")
+        else:
+            rospy.loginfo(f"Did not find {object_name}")
+            self._speak_response(f"I couldn't find the {object_name}.")
+        
+        # Update context
+        self.context['last_object'] = object_name
+    
+    def _execute_speak(self, message):
+        """Execute speech action"""
+        rospy.loginfo(f"Speaking: {message}")
+        self._speak_response(message)
+    
+    def _speak_response(self, message):
+        """Publish robot response"""
+        rospy.loginfo(f"Robot says: {message}")
+        self.response_pub.publish(String(data=message))
+    
+    def _handle_unrecognized_command(self, command, suggestions):
+        """Handle unrecognized commands"""
+        rospy.logwarn(f"Unrecognized command: {command}")
+        
+        # Provide suggestions or ask for clarification
+        if suggestions:
+            response = f"I didn't understand that. {suggestions[0]}"
+        else:
+            response = "I didn't understand that command. Could you repeat it or try a different phrasing?"
+        
+        self._speak_response(response)
+    
+    def shutdown(self):
+        """Clean up resources"""
+        rospy.loginfo("Command Mapper shutting down...")
+
+def main():
+    mapper = CommandMapper()
+    
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        rospy.loginfo("Shutting down command mapper...")
+    finally:
+        mapper.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Exercise 4.5: Capstone Project - Autonomous Humanoid System
+
+**Objective:** Integrate all VLA components into a working autonomous humanoid system.
+
+### Problem
+Create a complete system that receives voice commands, processes them using LLMs, integrates visual input, and executes appropriate robot actions.
+
+### Implementation Requirements
+1. Integrate all VLA components (vision, language, action)
+2. Implement robust command processing pipeline
+3. Create complete behavior execution system
+4. Implement error handling and recovery
+5. Demonstrate complete functionality in simulation
+
+### Solution
+Complete autonomous humanoid system:
+```python
+#!/usr/bin/env python3
+
+import rospy
+import actionlib
+import threading
+import queue
+from std_msgs.msg import String
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import PoseStamped
+from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
+from cv_bridge import CvBridge
+import openai
+import json
+import time
+import re
+from collections import deque
+
+class AutonomousHumanoidSystem:
+    def __init__(self):
+        rospy.init_node('autonomous_humanoid_system')
+        
+        # Initialize components
+        self.bridge = CvBridge()
+        self.command_queue = queue.Queue()
+        self.is_processing = False
+        self.system_active = True
+        
+        # OpenAI API setup
+        openai.api_key = rospy.get_param('~openai_api_key', 'YOUR_API_KEY')
+        
+        # Subscribe to inputs
+        self.voice_sub = rospy.Subscriber('/voice_commands', String, self.voice_callback)
+        self.image_sub = rospy.Subscriber('/camera/rgb/image_raw', Image, self.image_callback)
+        
+        # Publishers
+        self.response_pub = rospy.Publisher('/robot_responses', String, queue_size=10)
+        self.navigation_pub = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=1)
+        
+        # Action clients
+        self.nav_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+        self.nav_client.wait_for_server()
+        
+        # System context and state
+        self.current_image = None
+        self.context = {
+            'location_history': deque(maxlen=10),
+            'object_interactions': deque(maxlen=10),
+            'conversation_history': deque(maxlen=20)
+        }
+        
+        # Known environment map
+        self.environment_map = {
+            'locations': {
+                'kitchen': {'x': 2.0, 'y': 1.0, 'description': 'cooking area with counter and sink'},
+                'bedroom': {'x': -1.0, 'y': 2.0, 'description': 'sleeping area with bed and dresser'},
+                'living_room': {'x': 0.0, 'y': 0.0, 'description': 'main area with couch and coffee table'},
+                'dining_room': {'x': 1.0, 'y': -1.0, 'description': 'eating area with table and chairs'}
+            },
+            'objects': {
+                'table': {'x': 1.0, 'y': 0.0, 'type': 'furniture'},
+                'chair': {'x': 1.5, 'y': 0.5, 'type': 'furniture'},
+                'couch': {'x': -1.0, 'y': 0.5, 'type': 'furniture'},
+                'cup': {'x': 1.0, 'y': 0.1, 'type': 'movable'},
+                'book': {'x': 0.5, 'y': 0.2, 'type': 'movable'}
+            }
+        }
+        
+        rospy.loginfo("Autonomous Humanoid System initialized")
+    
+    def voice_callback(self, msg):
+        """Handle incoming voice commands"""
+        command = msg.data.strip()
+        if command:
+            rospy.loginfo(f"Received voice command: {command}")
+            self.command_queue.put(command)
+            
+            # Start processing if not already processing
+            if not self.is_processing:
+                self.process_commands()
+    
+    def image_callback(self, msg):
+        """Handle incoming camera images"""
+        try:
+            self.current_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        except Exception as e:
+            rospy.logerr(f"Error processing image: {e}")
+    
+    def process_commands(self):
+        """Process commands from the queue"""
+        if self.is_processing or self.command_queue.empty():
+            return
+        
+        self.is_processing = True
+        
+        # Process in separate thread to avoid blocking
+        thread = threading.Thread(target=self._process_command_thread)
+        thread.daemon = True
+        thread.start()
+    
+    def _process_command_thread(self):
+        """Process command in a separate thread"""
+        try:
+            # Get the next command
+            command = self.command_queue.get(timeout=1.0)
+            
+            # Add to context
+            self.context['conversation_history'].append({
+                'type': 'user_command',
+                'content': command,
+                'timestamp': time.time()
+            })
+            
+            # Process the command using VLA pipeline
+            self._process_vla_command(command)
+            
+        except queue.Empty:
+            rospy.loginfo("Command queue empty")
+        except Exception as e:
+            rospy.logerr(f"Error processing command: {e}")
+            self._speak_response("I encountered an error processing your command.")
+        finally:
+            self.is_processing = False
+            
+            # Process next command if available
+            if not self.command_queue.empty():
+                time.sleep(0.5)  # Small delay between commands
+                self.process_commands()
+    
+    def _process_vla_command(self, command):
+        """Process command using Vision-Language-Action pipeline"""
+        try:
+            # Get current visual context
+            visual_context = self._get_visual_context()
+            
+            # Use LLM to generate action plan
+            action_plan = self._generate_action_plan(command, visual_context)
+            
+            if action_plan:
+                # Execute the action plan
+                self._execute_action_plan(action_plan)
+            else:
+                rospy.logwarn("No action plan generated")
+                self._speak_response("I'm not sure how to help with that.")
+                
+        except Exception as e:
+            rospy.logerr(f"Error in VLA pipeline: {e}")
+            self._speak_response("I'm having trouble processing that command.")
+    
+    def _get_visual_context(self):
+        """Get current visual context (simulated)"""
+        # In a real system, this would interface with perception systems
+        # For simulation, return environment map as context
+        return {
+            'timestamp': time.time(),
+            'known_objects': list(self.environment_map['objects'].keys()),
+            'known_locations': list(self.environment_map['locations'].keys()),
+            'object_locations': self.environment_map['objects'],
+            'environment_map': self.environment_map
+        }
+    
+    def _generate_action_plan(self, command, visual_context):
+        """Generate action plan using LLM"""
+        system_prompt = f"""
+        You are an AI cognitive planner for an autonomous humanoid robot. 
+        The robot can perceive its environment, understand natural language, 
+        and execute physical actions.
+        
+        Current visual context:
+        - Known objects: {visual_context['known_objects']}
+        - Known locations: {visual_context['known_locations']}
+        - Object locations: {visual_context['object_locations']}
+        
+        The robot has these capabilities:
+        - Navigation: Move to specific locations
+        - Manipulation: Grasp and place objects
+        - Perception: Detect objects in the environment
+        - Communication: Speak responses
+        
+        Your task is to generate a sequence of actions to fulfill the user's request.
+        Return your response as a JSON object with an "actions" array.
+        
+        Each action should have:
+        - "type": The action type ("navigate", "detect", "grasp", "place", "speak", "wait")
+        - "target": The target of the action (object name, location name, etc.)
+        - "parameters": Additional parameters for the action
+        
+        Example response:
+        {{
+            "actions": [
+                {{"type": "navigate", "target": "kitchen", "parameters": {{"x": 2.0, "y": 1.0}}}},
+                {{"type": "detect", "target": "cup", "parameters": {{}}}},
+                {{"type": "grasp", "target": "cup", "parameters": {{"object_id": "cup_1"}}}}
+            ]
+        }}
+        """
+        
+        user_prompt = f"User command: '{command}'. Generate the appropriate action plan."
+        
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                max_tokens=500,
+                temperature=0.1
+            )
+            
+            response_text = response.choices[0].message['content'].strip()
+            
+            # Clean up markdown formatting
+            if response_text.startswith('```json'):
+                response_text = response_text[7:]
+            if response_text.endswith('```'):
+                response_text = response_text[:-3]
+            
+            # Parse the response
+            action_plan = json.loads(response_text)
+            return action_plan
+            
+        except Exception as e:
+            rospy.logerr(f"Error generating action plan: {e}")
+            return None
+    
+    def _execute_action_plan(self, action_plan):
+        """Execute the generated action plan"""
+        actions = action_plan.get('actions', [])
+        rospy.loginfo(f"Executing action plan with {len(actions)} actions")
+        
+        for i, action in enumerate(actions):
+            rospy.loginfo(f"Executing action {i+1}/{len(actions)}: {action}")
+            
+            action_type = action.get('type', '')
+            target = action.get('target', '')
+            parameters = action.get('parameters', {})
+            
+            # Execute the action
+            success = self._execute_single_action(action_type, target, parameters)
+            
+            if not success:
+                rospy.logerr(f"Action failed: {action}")
+                self._speak_response("I encountered a problem executing the task.")
+                break  # Stop execution on failure
+            
+            # Small delay between actions
+            time.sleep(0.5)
+        
+        # Notify completion
+        if actions:
+            self._speak_response("Task completed successfully.")
+    
+    def _execute_single_action(self, action_type, target, parameters):
+        """Execute a single action based on its type"""
+        try:
+            if action_type == 'navigate':
+                return self._execute_navigation(target, parameters)
+            elif action_type == 'detect':
+                return self._execute_detection(target, parameters)
+            elif action_type == 'grasp':
+                return self._execute_grasp(target, parameters)
+            elif action_type == 'place':
+                return self._execute_placement(target, parameters)
+            elif action_type == 'speak':
+                return self._execute_speech(target, parameters)
+            elif action_type == 'wait':
+                duration = parameters.get('duration', 1.0)
+                time.sleep(duration)
+                return True
+            else:
+                rospy.logwarn(f"Unknown action type: {action_type}")
+                return False
+                
+        except Exception as e:
+            rospy.logerr(f"Error executing action {action_type}: {e}")
+            return False
+    
+    def _execute_navigation(self, target, parameters):
+        """Execute navigation action"""
+        try:
+            # Extract coordinates
+            x = parameters.get('x', 0.0)
+            y = parameters.get('y', 0.0)
+            
+            rospy.loginfo(f"Navigating to ({x}, {y}) for {target}")
+            
+            # Create navigation goal
+            goal = MoveBaseGoal()
+            goal.target_pose.header.frame_id = "map"
+            goal.target_pose.header.stamp = rospy.Time.now()
+            goal.target_pose.pose.position.x = x
+            goal.target_pose.pose.position.y = y
+            goal.target_pose.pose.orientation.w = 1.0
+            
+            # Send goal
+            self.nav_client.send_goal_and_wait(goal, execute_timeout=rospy.Duration(60.0))
+            
+            # Check result
+            state = self.nav_client.get_state()
+            success = state == actionlib.GoalStatus.SUCCEEDED
+            
+            if success:
+                rospy.loginfo("Navigation successful")
+                # Update location history
+                self.context['location_history'].append({
+                    'location': target,
+                    'coordinates': {'x': x, 'y': y},
+                    'timestamp': time.time()
+                })
+            else:
+                rospy.logwarn("Navigation failed")
+            
+            return success
+            
+        except Exception as e:
+            rospy.logerr(f"Navigation error: {e}")
+            return False
+    
+    def _execute_detection(self, target, parameters):
+        """Execute detection action"""
+        try:
+            rospy.loginfo(f"Detecting {target}")
+            
+            # In a real system, this would interface with perception
+            # For simulation, assume detection after a short delay
+            time.sleep(1.0)
+            
+            # Simulate detection result
+            detected = True  # In real system, this would come from perception
+            
+            if detected:
+                rospy.loginfo(f"Detected {target}")
+                self.context['object_interactions'].append({
+                    'action': 'detected',
+                    'object': target,
+                    'timestamp': time.time()
+                })
+                return True
+            else:
+                rospy.loginfo(f"Could not detect {target}")
+                self._speak_response(f"I couldn't find the {target}.")
+                return False
+                
+        except Exception as e:
+            rospy.logerr(f"Detection error: {e}")
+            return False
+    
+    def _execute_grasp(self, target, parameters):
+        """Execute grasping action"""
+        try:
+            rospy.loginfo(f"Grasping {target}")
+            
+            # In a real system, this would interface with manipulation
+            # For simulation, assume success after a delay
+            time.sleep(2.0)
+            
+            rospy.loginfo(f"Successfully grasped {target}")
+            self.context['object_interactions'].append({
+                'action': 'grasped',
+                'object': target,
+                'timestamp': time.time()
+            })
+            return True
+            
+        except Exception as e:
+            rospy.logerr(f"Grasping error: {e}")
+            return False
+    
+    def _execute_placement(self, target, parameters):
+        """Execute placement action"""
+        try:
+            rospy.loginfo(f"Placing {target}")
+            
+            # Extract placement location if provided
+            place_location = parameters.get('location', 'default')
+            x = parameters.get('x', 0.0)
+            y = parameters.get('y', 0.0)
+            
+            rospy.loginfo(f"Placing {target} at ({x}, {y})")
+            
+            # In a real system, this would interface with manipulation
+            # For simulation, assume success after a delay
+            time.sleep(2.0)
+            
+            rospy.loginfo(f"Successfully placed {target}")
+            self.context['object_interactions'].append({
+                'action': 'placed',
+                'object': target,
+                'location': place_location,
+                'timestamp': time.time()
+            })
+            return True
+            
+        except Exception as e:
+            rospy.logerr(f"Placement error: {e}")
+            return False
+    
+    def _execute_speech(self, target, parameters):
+        """Execute speech action"""
+        try:
+            # If target is empty, look for message in parameters
+            message = target if target else parameters.get('message', 'Hello')
+            
+            rospy.loginfo(f"Speaking: {message}")
+            self._speak_response(message)
+            return True
+            
+        except Exception as e:
+            rospy.logerr(f"Speech error: {e}")
+            return False
+    
+    def _speak_response(self, message):
+        """Publish a speech response"""
+        rospy.loginfo(f"Robot says: {message}")
+        self.response_pub.publish(String(data=message))
+        
+        # Add to conversation history
+        self.context['conversation_history'].append({
+            'type': 'robot_response',
+            'content': message,
+            'timestamp': time.time()
+        })
+    
+    def run(self):
+        """Main run loop"""
+        rospy.loginfo("Autonomous Humanoid System running")
+        
+        rate = rospy.Rate(10)  # 10 Hz
+        
+        while not rospy.is_shutdown() and self.system_active:
+            # Perform any periodic maintenance tasks here
+            rate.sleep()
+    
+    def shutdown(self):
+        """Clean up resources"""
+        rospy.loginfo("Autonomous Humanoid System shutting down...")
+        self.system_active = False
+
+def main():
+    system = AutonomousHumanoidSystem()
+    
+    try:
+        system.run()
+    except KeyboardInterrupt:
+        rospy.loginfo("Shutting down autonomous humanoid system...")
+    finally:
+        system.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+---
+
+## Project 4: Autonomous Humanoid Capstone
+
+**Objective:** Create a complete VLA system for an autonomous humanoid robot that can understand voice commands, perceive its environment, and execute complex tasks.
+
+### Requirements
+1. Integrate all VLA components into a cohesive system
+2. Implement robust command processing with error handling
+3. Create complete behavior execution pipeline
+4. Demonstrate in simulation with realistic scenarios
+5. Document system architecture and performance
+
+### Implementation Steps
+1. Set up complete VLA pipeline with voice processing
+2. Implement LLM-based cognitive planning
+3. Integrate perception and action execution
+4. Create realistic simulation scenarios
+5. Test and validate complete system functionality
+6. Document results and system architecture
+
+### Evaluation Criteria
+- Completeness of VLA integration
+- Naturalness of voice interaction
+- Effectiveness of cognitive planning
+- Robustness of execution pipeline
+- Quality of system documentation
+- Performance in realistic scenarios

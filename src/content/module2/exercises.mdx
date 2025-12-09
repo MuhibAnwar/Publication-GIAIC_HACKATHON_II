@@ -1,0 +1,598 @@
+---
+title: "Module 2 Exercises: The Digital Twin (Gazebo & Unity)"
+description: "Chapter problems and projects for Module 2"
+---
+
+# Module 2 Exercises: The Digital Twin (Gazebo & Unity)
+
+## Exercise 2.1: Gazebo World Creation
+
+**Objective:** Create a complex Gazebo world with multiple objects and environments.
+
+### Problem
+Design and implement a Gazebo world file (SDF) that represents a humanoid robot testing environment. The world should include:
+- A flat ground plane
+- Multiple obstacles of different shapes and sizes
+- Ramps or steps to test locomotion
+- A designated area for humanoid testing
+
+### Implementation Requirements
+1. Create an SDF file describing the environment
+2. Include objects with different physical properties (mass, friction, restitution)
+3. Add visual models for realistic rendering
+4. Create a launch file to start Gazebo with your world
+
+### Solution
+```xml
+<?xml version="1.0" ?>
+<sdf version="1.7">
+  <world name="humanoid_test_world">
+    <!-- Physics engine properties -->
+    <physics type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>1000.0</real_time_update_rate>
+    </physics>
+
+    <!-- Include ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- Include sun -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Start area for robot -->
+    <model name="start_platform">
+      <pose>0 0 0 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>2.0 2.0 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.7 0.7 0.7 1</diffuse>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>2.0 2.0 0.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass>100.0</mass>
+          <inertia>
+            <ixx>33.63</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>33.63</iyy>
+            <iyz>0</iyz>
+            <izz>66.67</izz>
+          </inertia>
+        </inertial>
+      </link>
+    </model>
+
+    <!-- Obstacle 1: Box -->
+    <model name="obstacle_box">
+      <pose>3 0 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.5 0.5 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.8 0.4 0.1 1</ambient>
+            <diffuse>0.8 0.4 0.1 1</diffuse>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.5 0.5 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass>5.0</mass>
+          <inertia>
+            <ixx>0.4167</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.4167</iyy>
+            <iyz>0</iyz>
+            <izz>0.2083</izz>
+          </inertia>
+        </inertial>
+      </link>
+    </model>
+
+    <!-- Obstacle 2: Cylinder -->
+    <model name="obstacle_cylinder">
+      <pose>-3 0 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.3</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.1 0.4 0.8 1</ambient>
+            <diffuse>0.1 0.4 0.8 1</diffuse>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.3</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass>3.0</mass>
+          <inertia>
+            <ixx>0.2625</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.2625</iyy>
+            <iyz>0</iyz>
+            <izz>0.135</izz>
+          </inertia>
+        </inertial>
+      </link>
+    </model>
+
+    <!-- Ramp for locomotion test -->
+    <model name="ramp">
+      <pose>4 2 0 0 0 0.3</pose>  <!-- Position and orientation -->
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>2.0 1.0 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>2.0 1.0 0.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass>20.0</mass>
+          <inertia>
+            <ixx>1.833</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.833</iyy>
+            <iyz>0</iyz>
+            <izz>1.0</izz>
+          </inertia>
+        </inertial>
+      </link>
+    </model>
+
+    <!-- Step obstacle -->
+    <model name="step">
+      <pose>0 3 0.1 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>1.0 0.5 0.2</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.4 0.4 0.4 1</ambient>
+            <diffuse>0.4 0.4 0.4 1</diffuse>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>1.0 0.5 0.2</size>
+            </box>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass>10.0</mass>
+          <inertia>
+            <ixx>0.208</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.417</iyy>
+            <iyz>0</iyz>
+            <izz>0.542</izz>
+          </inertia>
+        </inertial>
+      </link>
+    </model>
+
+    <!-- Testing area marker -->
+    <model name="test_area_marker">
+      <pose>0 -3 0.02 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>1.0</radius>
+              <length>0.04</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.9 0.1 1</ambient>
+            <diffuse>0.9 0.9 0.1 1</diffuse>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>1.0</radius>
+              <length>0.04</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass>2.0</mass>
+          <inertia>
+            <ixx>0.667</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.667</iyy>
+            <iyz>0</iyz>
+            <izz>1.0</izz>
+          </inertia>
+        </inertial>
+      </link>
+    </model>
+  </world>
+</sdf>
+```
+
+## Exercise 2.2: URDF to SDF Conversion and Integration
+
+**Objective:** Convert a URDF robot model to SDF and integrate it into your Gazebo world.
+
+### Problem
+Take the humanoid URDF model created in Module 1 and spawn it in your custom Gazebo world. Add Gazebo-specific tags to enable physics simulation and sensor integration.
+
+### Implementation Requirements
+1. Convert URDF to SDF if needed
+2. Add Gazebo-specific tags for physics and visualization
+3. Include at least one sensor (IMU, camera, or LiDAR)
+4. Test the robot in your environment
+
+### Solution
+SDF extension for your humanoid model (add to URDF):
+```xml
+<!-- Add to your URDF file as Gazebo-specific extensions -->
+<gazebo reference="base_link">
+  <material>Gazebo/White</material>
+  <turnGravityOff>false</turnGravityOff>
+</gazebo>
+
+<gazebo reference="head_link">
+  <material>Gazebo/Blue</material>
+  <turnGravityOff>false</turnGravityOff>
+</gazebo>
+
+<!-- Add IMU sensor to the head -->
+<gazebo>
+  <plugin name="imu_sensor" filename="libgazebo_ros_imu.so">
+    <ros>
+      <namespace>imu</namespace>
+      <remapping>~/out:=imu_data</remapping>
+    </ros>
+    <initial_orientation_as_reference>false</initial_orientation_as_reference>
+  </plugin>
+</gazebo>
+
+<!-- Add camera to the head -->
+<gazebo reference="head_link">
+  <sensor type="camera" name="camera1">
+    <update_rate>30</update_rate>
+    <camera name="head">
+      <horizontal_fov>1.3962634</horizontal_fov>
+      <image>
+        <width>640</width>
+        <height>480</height>
+        <format>R8G8B8</format>
+      </image>
+      <clip>
+        <near>0.1</near>
+        <far>100</far>
+      </clip>
+    </camera>
+    <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+      <ros>
+        <namespace>camera</namespace>
+        <remapping>image_raw:=image</remapping>
+        <remapping>camera_info:=camera_info</remapping>
+      </ros>
+    </plugin>
+  </sensor>
+</gazebo>
+```
+
+## Exercise 2.3: Physics Parameter Tuning
+
+**Objective:** Tune physics simulation parameters for stable humanoid simulation.
+
+### Problem
+Create a launch file and configuration to experiment with different physics parameters (contact stiffness, damping, friction) to achieve stable humanoid locomotion in simulation.
+
+### Implementation Requirements
+1. Create a configuration file for physics parameters
+2. Experiment with different parameter sets
+3. Document the effects of each parameter on simulation stability
+4. Find optimal parameters for humanoid simulation
+
+### Solution
+Physics configuration file (`config/physics_params.yaml`):
+```yaml
+world_physics:
+  # ODE physics engine parameters
+  ode_config:
+    # Contact parameters
+    cfm: 0.0  # Constraint force mixing
+    erp: 0.2  # Error reduction parameter
+    max_contacts: 20  # Maximum contacts between any two geoms
+    
+    # Solver parameters
+    ode_solver_type: "quick"  # or "world"
+    iters: 10  # Number of iterations in each time step
+    sor: 1.3  # Successive over-relaxation parameter
+    
+    # Contact surface parameters
+    contact_surface_layer: 0.001
+    contact_max_correcting_vel: 100.0
+    
+  # Real-time parameters
+  max_step_size: 0.001  # Time step in seconds
+  real_time_factor: 1.0  # Desired rate of simulation vs real time
+  real_time_update_rate: 1000.0  # Rate at which physics updates occur (Hz)
+  
+  # General physics parameters
+  gravity_x: 0.0
+  gravity_y: 0.0
+  gravity_z: -9.8
+```
+
+## Exercise 2.4: Unity Environment Integration
+
+**Objective:** Set up a Unity environment for robot visualization and perception training.
+
+### Problem
+Install and configure Unity Robotics Hub, create a simple environment with a humanoid robot, and establish communication with ROS2.
+
+### Implementation Requirements
+1. Set up Unity-ROS bridge
+2. Create a simple Unity environment
+3. Import or create a humanoid robot model
+4. Implement basic robot control via ROS2
+5. Enable sensor data transmission (e.g., camera feed)
+
+### Solution
+Unity ROS connection script (`Assets/Scripts/RobotController.cs`):
+```csharp
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using RosMessageTypes.Sensor;
+using RosMessageTypes.Std;
+using Unity.Robotics.ROSTCPConnector;
+using Unity.Robotics.ROSTCPConnector.MessageGeneration;
+
+public class RobotController : MonoBehaviour
+{
+    [SerializeField]
+    private GameObject robotBase;  // Robot base that will be controlled
+    [SerializeField]
+    private float movementSpeed = 1.0f;
+    [SerializeField]
+    private float rotationSpeed = 1.0f;
+    
+    private ROSConnection ros;
+    private string robotTopic = "unity_robot_control";
+    
+    // Start is called before the first frame update
+    void Start()
+    {
+        // Get the ROS connection static instance
+        ros = ROSConnection.GetOrCreateInstance();
+        ros.RegisterPublisher<UnityRobotControlMsg>(robotTopic);
+        
+        // Subscribe to commands from ROS
+        ros.Subscribe<UnityRobotControlMsg>(robotTopic + "_cmd", ReceiveRobotCommand);
+    }
+    
+    // Callback to handle incoming messages
+    void ReceiveRobotCommand(UnityRobotControlMsg cmd)
+    {
+        // Process the command
+        Vector3 movement = new Vector3(cmd.linear.x, cmd.linear.y, cmd.linear.z);
+        Vector3 rotation = new Vector3(cmd.angular.x, cmd.angular.y, cmd.angular.z);
+        
+        // Apply movement and rotation to the robot
+        robotBase.transform.Translate(movement * Time.deltaTime * movementSpeed);
+        robotBase.transform.Rotate(rotation * Time.deltaTime * rotationSpeed);
+    }
+    
+    void OnDestroy()
+    {
+        if (ros != null)
+        {
+            ros.UnregisterPublisher<UnityRobotControlMsg>(robotTopic);
+            ros.UnregisterSubscriber<UnityRobotControlMsg>(robotTopic + "_cmd");
+        }
+    }
+}
+```
+
+## Exercise 2.5: Sensor Simulation and Validation
+
+**Objective:** Implement and validate different sensor types in simulation.
+
+### Problem
+Add multiple sensor types (IMU, camera, LiDAR) to your humanoid model and validate their outputs against expected values.
+
+### Implementation Requirements
+1. Implement at least 3 different sensor types
+2. Create a validation system to verify sensor outputs
+3. Compare simulated sensor data with theoretical values
+4. Document any discrepancies and potential causes
+
+### Solution
+Validation script (`sensor_validation.py`):
+```python
+#!/usr/bin/env python3
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu, Image, LaserScan
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Vector3
+import numpy as np
+from scipy.spatial.transform import Rotation as R
+
+class SensorValidator(Node):
+    def __init__(self):
+        super().__init__('sensor_validator')
+        
+        # Subscribe to various sensor topics
+        self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_callback, 10)
+        self.camera_sub = self.create_subscription(Image, '/camera/image', self.camera_callback, 10)
+        self.lidar_sub = self.create_subscription(LaserScan, '/lidar/scan', self.lidar_callback, 10)
+        self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+        
+        # Store expected values
+        self.expected_linear_acc = Vector3(x=0.0, y=0.0, z=9.81)  # Assuming robot is upright
+        self.expected_angular_vel = Vector3(x=0.0, y=0.0, z=0.0)  # Assuming no rotation initially
+        
+        # Validation thresholds
+        self.linear_acc_threshold = 1.0  # m/s^2
+        self.angular_vel_threshold = 0.1  # rad/s
+        
+        self.get_logger().info('Sensor Validator initialized')
+    
+    def imu_callback(self, msg):
+        """Validate IMU readings against expected values"""
+        # Extract actual values
+        actual_linear_acc = np.array([msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z])
+        actual_angular_vel = np.array([msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z])
+        
+        # Calculate differences
+        acc_diff = np.linalg.norm(actual_linear_acc - [0, 0, 9.81])  # Gravity vector
+        vel_diff = np.linalg.norm(actual_angular_vel - [0, 0, 0])
+        
+        # Validate against thresholds
+        acc_valid = acc_diff < self.linear_acc_threshold
+        vel_valid = vel_diff < self.angular_vel_threshold
+        
+        if not acc_valid:
+            self.get_logger().warn(f'IMU Acceleration validation failed: expected [0,0,9.81], got {actual_linear_acc}, diff={acc_diff:.3f}')
+        if not vel_valid:
+            self.get_logger().warn(f'IMU Angular velocity validation failed: expected [0,0,0], got {actual_angular_vel}, diff={vel_diff:.3f}')
+        
+        if acc_valid and vel_valid:
+            self.get_logger().info(f'IMU validation passed: acc diff={acc_diff:.3f}, vel diff={vel_diff:.3f}')
+    
+    def camera_callback(self, msg):
+        """Basic validation for camera data"""
+        # Check if image dimensions are as expected
+        expected_width = 640
+        expected_height = 480
+        
+        if msg.width != expected_width or msg.height != expected_height:
+            self.get_logger().warn(f'Camera validation failed: expected {expected_width}x{expected_height}, got {msg.width}x{msg.height}')
+        else:
+            self.get_logger().info(f'Camera validation passed: {msg.width}x{msg.height}')
+    
+    def lidar_callback(self, msg):
+        """Validate LiDAR data"""
+        # Check if ranges are within expected bounds
+        ranges = np.array(msg.ranges)
+        valid_ranges = ranges[(ranges >= msg.range_min) & (ranges <= msg.range_max) & ~np.isnan(ranges) & ~np.isinf(ranges)]
+        
+        if len(valid_ranges) == 0:
+            self.get_logger().warn('LiDAR validation failed: No valid ranges detected')
+        else:
+            self.get_logger().info(f'LiDAR validation passed: {len(valid_ranges)}/{len(ranges)} valid ranges')
+    
+    def odom_callback(self, msg):
+        """Validate odometry data"""
+        # Position and orientation should be finite
+        pos = msg.pose.pose.position
+        quat = msg.pose.pose.orientation
+        
+        position_valid = np.isfinite([pos.x, pos.y, pos.z]).all()
+        orientation_valid = np.isfinite([quat.x, quat.y, quat.z, quat.w]).all()
+        
+        if not position_valid:
+            self.get_logger().warn(f'Odom position validation failed: pos = [{pos.x}, {pos.y}, {pos.z}]')
+        if not orientation_valid:
+            self.get_logger().warn(f'Odom orientation validation failed: quat = [{quat.x}, {quat.y}, {quat.z}, {quat.w}]')
+        
+        if position_valid and orientation_valid:
+            self.get_logger().info('Odom validation passed')
+
+def main(args=None):
+    rclpy.init(args=args)
+    validator = SensorValidator()
+    
+    try:
+        rclpy.spin(validator)
+    except KeyboardInterrupt:
+        validator.get_logger().info('Sensor validator shutting down...')
+    finally:
+        validator.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+---
+
+## Project 2: Physics-Based Robot Simulation Platform
+
+**Objective:** Build a complete simulation environment for testing humanoid navigation and manipulation.
+
+### Requirements
+1. Create a Gazebo world with multiple test scenarios
+2. Implement sensor-rich humanoid robot model
+3. Develop physics validation tools
+4. Create Unity visualization environment (optional)
+5. Document simulation fidelity and validation results
+
+### Implementation Steps
+1. Design and implement the test environment
+2. Create the sensor-equipped humanoid model
+3. Develop validation and debugging tools
+4. Test the simulation with basic navigation and manipulation tasks
+5. Document the simulation capabilities and limitations
+
+### Evaluation Criteria
+- Completeness of environment simulation
+- Fidelity of robot model and sensors
+- Effectiveness of validation tools
+- Quality of documentation
+- Performance and stability of simulation

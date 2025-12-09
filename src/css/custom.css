@@ -1,0 +1,110 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #2e8555;
+  --ifm-color-primary-dark: #29784c;
+  --ifm-color-primary-darker: #277148;
+  --ifm-color-primary-darkest: #205d3b;
+  --ifm-color-primary-light: #33925d;
+  --ifm-color-primary-lighter: #359962;
+  --ifm-color-primary-lightest: #3cad6e;
+  --ifm-code-font-size: 95%;
+}
+
+/* Dark mode */
+html[data-theme='dark'] {
+  --ifm-color-primary: #25c2a0;
+  --ifm-color-primary-dark: #21af90;
+  --ifm-color-primary-darker: #1fa588;
+  --ifm-color-primary-darkest: #1a8870;
+  --ifm-color-primary-light: #29d5b0;
+  --ifm-color-primary-lighter: #32d8b4;
+  --ifm-color-primary-lightest: #4fddbf;
+}
+
+/* Custom styles for textbook */
+.hero--primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Admonition styles */
+.admonition {
+  border-left: 4px solid #007cba;
+  background-color: #f8f9fa;
+  padding: 16px;
+  margin: 24px 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.admonition-note {
+  border-left-color: #007cba;
+}
+
+.admonition-tip {
+  border-left-color: #28a745;
+}
+
+.admonition-warning {
+  border-left-color: #ffc107;
+}
+
+.admonition-caution {
+  border-left-color: #dc3545;
+}
+
+.admonition h5 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+/* Math formatting */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Code block enhancements */
+.code-block-error-line {
+  background-color: #ff000020;
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+  border-left: 3px solid #ff0000;
+}
+
+/* Table enhancements */
+.table-enhanced {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.table-enhanced th,
+.table-enhanced td {
+  border: 1px solid var(--ifm-table-border-color);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.table-enhanced th {
+  background-color: var(--ifm-table-head-background);
+  font-weight: bold;
+}
+
+/* Custom button styling */
+.button--secondary {
+  background-color: transparent;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  color: var(--ifm-color-emphasis-800);
+}
+
+html[data-theme='dark'] .button--secondary {
+  border: 1px solid var(--ifm-color-emphasis-500);
+  color: var(--ifm-color-emphasis-200);
+}

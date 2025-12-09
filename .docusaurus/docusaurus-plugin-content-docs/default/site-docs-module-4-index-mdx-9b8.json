@@ -1,0 +1,23 @@
+{
+  "id": "module4/index",
+  "title": "Module 4: Vision-Language-Action (VLA)",
+  "description": "The convergence of LLMs and Robotics in humanoid systems",
+  "source": "@site/docs/module4/index.mdx",
+  "sourceDirName": "module4",
+  "slug": "/module4/",
+  "permalink": "/textbook/docs/module4/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/spec-ai/textbook/tree/main/docs/module4/index.mdx",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Module 4: Vision-Language-Action (VLA)",
+    "description": "The convergence of LLMs and Robotics in humanoid systems"
+  },
+  "sidebar": "textbookSidebar",
+  "previous": {
+    "title": "Module 3: The AI-Robot Brain (NVIDIA Isaac™)",
+    "permalink": "/textbook/docs/module3/"
+  }
+}

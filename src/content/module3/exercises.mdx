@@ -1,0 +1,826 @@
+---
+title: "Module 3 Exercises: The AI-Robot Brain (NVIDIA Isaac™)"
+description: "Chapter problems and projects for Module 3"
+---
+
+# Module 3 Exercises: The AI-Robot Brain (NVIDIA Isaac™)
+
+## Exercise 3.1: Isaac Sim Environment Setup
+
+**Objective:** Install and configure NVIDIA Isaac Sim with a humanoid robot model.
+
+### Problem
+Set up Isaac Sim, import a humanoid robot model, configure sensors, and validate basic functionality.
+
+### Implementation Requirements
+1. Install Isaac Sim following NVIDIA documentation
+2. Import or create a humanoid robot model
+3. Configure appropriate sensors (IMU, camera, etc.)
+4. Validate physics simulation and sensor outputs
+5. Create a basic simulation scenario
+
+### Solution
+Basic Python script to initialize Isaac Sim:
+```python
+import omni
+from omni.isaac.kit import SimulationApp
+
+# Configure simulation
+config = {
+    "headless": False,  # Set to True for headless execution
+    "physics_fps": 60   # Physics update rate
+}
+
+# Initialize simulation app
+simulation_app = SimulationApp(config)
+
+# Import required Isaac modules after SimulationApp is initialized
+from omni.isaac.core import World
+from omni.isaac.core.utils.stage import add_reference_to_stage
+from omni.isaac.core.utils.nucleus import get_assets_root_path
+from omni.isaac.core.utils.prims import get_prim_at_path
+from omni.isaac.sensor import IMUSensor
+import numpy as np
+
+# Create the world instance
+world = World(stage_units_in_meters=1.0)
+
+# Add a simple robot to the stage (replace with your humanoid model)
+# For this example, we'll use a simple rigid body with sensors
+add_reference_to_stage(
+    usd_path="path/to/humanoid_model.usd",  # Replace with your model
+    prim_path="/World/Humanoid"
+)
+
+# Reset the world to begin simulation
+world.reset()
+
+# Add sensors to the robot (example with IMU)
+# Find the appropriate link to attach the IMU (e.g., pelvis or head)
+try:
+    imu_sensor = IMUSensor(
+        prim_path="/World/Humanoid/base_link/Imu_Sensor",  # Update path as needed
+        frequency=100,  # Hz
+        translation=np.array([0, 0, 0]),
+        orientation=np.array([1, 0, 0, 0])
+    )
+except Exception as e:
+    print(f"Could not add IMU: {e}")
+    print("Make sure your robot model has the appropriate link defined")
+
+# Simulation loop
+for i in range(500):  # Run for 500 steps
+    # Apply any actions if needed
+    # world.step(render=True)  # Render at display rate
+    
+    # Get sensor data periodically
+    if i % 100 == 0:
+        # Example: Print simulation time
+        print(f"Simulation step: {i}, Time: {world.current_time_step_index * world.get_physics_dt():.3f}s")
+    
+    # Step the world
+    world.step(render=True)
+
+# Clean up
+simulation_app.close()
+```
+
+## Exercise 3.2: Isaac ROS Perception Pipeline
+
+**Objective:** Implement a hardware-accelerated perception pipeline using Isaac ROS.
+
+### Problem
+Create a perception pipeline that processes camera data using Isaac ROS nodes for image rectification, stereo processing, or object detection.
+
+### Implementation Requirements
+1. Set up Isaac ROS packages for perception
+2. Implement image rectification pipeline
+3. Add object detection or segmentation capabilities
+4. Validate hardware acceleration performance
+5. Evaluate accuracy in simulation environment
+
+### Solution
+ROS 2 launch file for Isaac ROS perception pipeline:
+```python
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration
+from launch.event_handlers import OnProcessStart
+from launch_ros.actions import Node, SetParameter
+from ament_index_python.packages import get_package_share_directory
+import os
+
+def generate_launch_description():
+    # Declare launch arguments
+    launch_args = [
+        DeclareLaunchArgument(
+            "use_sim_time",
+            default_value="True",
+            description="Use simulation time"
+        ),
+        DeclareLaunchArgument(
+            "camera_namespace",
+            default_value="/front_camera",
+            description="Namespace for camera topics"
+        )
+    ]
+    
+    # Launch configuration
+    use_sim_time = LaunchConfiguration("use_sim_time")
+    camera_namespace = LaunchConfiguration("camera_namespace")
+    
+    # Set global parameters
+    set_parameters = SetParameter(name="use_sim_time", value=use_sim_time)
+    
+    # Isaac ROS stereo rectification node
+    stereo_rectification_node = Node(
+        package="isaac_ros_image_proc",
+        executable="rectify_node",
+        name="stereo_rectification_node",
+        parameters=[{
+            "use_sim_time": use_sim_time,
+            "output_width": 1920,
+            "output_height": 1080
+        }],
+        remappings=[
+            ("image", f"{camera_namespace}/image_raw"),
+            ("camera_info", f"{camera_namespace}/camera_info"),
+            ("image_rect", f"{camera_namespace}/image_rect_color")
+        ]
+    )
+    
+    # Isaac ROS object detection node
+    det_node = Node(
+        package="isaac_ros_detectnet",
+        executable="isaac_ros_detectnet",
+        name="detectnet",
+        parameters=[{
+            "use_sim_time": use_sim_time,
+            "model_name": "ssd_mobilenet_v2_coco",
+            "input_width": 960,
+            "input_height": 544,
+            "max_batch_size": 1,
+            "num_classes": 2,  # Adjust based on your model
+            "confidence_threshold": 0.7
+        }],
+        remappings=[
+            ("image", f"{camera_namespace}/image_rect_color"),
+            ("camera_info", f"{camera_namespace}/camera_info"),
+            ("detections", f"{camera_namespace}/detections")
+        ]
+    )
+    
+    # Isaac ROS visualization node
+    viz_node = Node(
+        package="isaac_ros_visualization",
+        executable="bbox_to_occupancy_grid",
+        name="bbox_to_occupancy_grid",
+        parameters=[{
+            "use_sim_time": use_sim_time
+        }],
+        remappings=[
+            ("bbox", f"{camera_namespace}/detections"),
+            ("occupancy_grid", f"{camera_namespace}/occupancy_grid")
+        ]
+    )
+    
+    # Return the launch description
+    return LaunchDescription(
+        launch_args + 
+        [set_parameters] +
+        [stereo_rectification_node] + 
+        [det_node] +
+        [viz_node]
+    )
+```
+
+## Exercise 3.3: Isaac Navigation with Nav2
+
+**Objective:** Configure Nav2 for humanoid robot navigation with Isaac Sim.
+
+### Problem
+Set up the Nav2 stack to work with a simulated humanoid robot in Isaac Sim environment, considering the unique challenges of bipedal locomotion.
+
+### Implementation Requirements
+1. Configure Nav2 for humanoid-specific navigation
+2. Implement path planning considering step constraints
+3. Create obstacle avoidance behaviors
+4. Test navigation in simulated environment
+5. Validate performance metrics
+
+### Solution
+Nav2 configuration file (`config/humanoid_nav2_params.yaml`):
+```yaml
+bt_navigator:
+  ros__parameters:
+    use_sim_time: True
+    global_frame: map
+    robot_base_frame: base_link
+    odom_topic: /odom
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    enable_groot_monitoring: True
+    groot_zmq_publisher_port: 1666
+    groot_zmq_server_port: 1667
+    default_nav_through_poses_bt_xml: "path/to/humanoid_nav_through_poses.xml"
+    default_nav_to_pose_bt_xml: "path/to/humanoid_nav_to_pose.xml"
+
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 10.0
+    use_sim_time: True
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner/NavfnPlanner"
+      tolerance: 0.5
+      use_astar: false
+      allow_unknown: true
+
+controller_server:
+  ros__parameters:
+    use_sim_time: True
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    controller_plugins: ["FollowPath"]
+    FollowPath:
+      plugin: "nav2_mppi_controller/MPPIController"
+      time_steps: 50
+      control_freq: 50.0
+      batch_size: 2000
+      omni_sample_num: 50
+      reference_heading: 1.0
+      heading_scale: 1.0
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+      trans_stopped_velocity: 0.25
+      rot_stopped_velocity: 0.25
+      max_linear_speed: 0.4  # Slower for humanoid stability
+      max_angular_speed: 0.4
+      min_linear_speed: 0.05
+      min_angular_speed: 0.05
+      inflation_cost_scaling_factor: 3.0
+      # Humanoid-specific parameters
+      step_size: 0.3       # Max step size for humanoid
+      balance_threshold: 0.1 # Stability threshold
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      update_frequency: 10.0
+      publish_frequency: 10.0
+      global_frame: odom
+      robot_base_frame: base_link
+      use_sim_time: True
+      rolling_window: true
+      width: 6
+      height: 6
+      resolution: 0.05  # Higher resolution for precise foot placement
+      robot_radius: 0.3
+      plugins: ["voxel_layer", "inflation_layer"]
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.5
+      voxel_layer:
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: True
+        publish_voxel_map: False
+        origin_z: 0.0
+        z_resolution: 0.2
+        z_voxels: 10
+        max_obstacle_height: 2.0
+        mark_threshold: 0
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "LaserScan"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
+  local_planner:
+    ros__parameters:
+      use_sim_time: True
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: base_link
+      use_sim_time: True
+      robot_radius: 0.3
+      resolution: 0.05
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: True
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "LaserScan"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.5
+```
+
+## Exercise 3.4: Reinforcement Learning for Locomotion
+
+**Objective:** Implement a reinforcement learning approach for humanoid locomotion using Isaac Gym.
+
+### Problem
+Create a reinforcement learning environment for training humanoid walking using Isaac Gym, implementing PPO algorithm for stable locomotion.
+
+### Implementation Requirements
+1. Set up Isaac Gym environment for humanoid
+2. Define observation and action spaces
+3. Implement reward function for stable walking
+4. Train policy using PPO algorithm
+5. Evaluate performance and transfer to simulation
+
+### Solution
+Reinforcement learning environment (`humanoid_rl_env.py`):
+```python
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.distributions import Normal
+import gym
+from gym import spaces
+import argparse
+
+class HumanoidRLEnv:
+    def __init__(self):
+        # Define action and observation spaces
+        # 10 joint angle changes for simplified humanoid
+        action_dim = 10
+        self.action_space = spaces.Box(
+            low=-1.0, high=1.0, shape=(action_dim,), dtype=np.float32
+        )
+        
+        # Observation: joint positions, velocities, IMU readings, relative positions
+        obs_dim = 32  # Adjust based on your humanoid model
+        self.observation_space = spaces.Box(
+            low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32
+        )
+        
+        # RL environment parameters
+        self.max_episode_steps = 500
+        self.current_step = 0
+        
+        # Physics simulation parameters
+        self.dt = 1/60.0  # Time step for simulation
+        
+        # Initialize robot state
+        self.reset()
+    
+    def reset(self):
+        """Reset the environment and return initial observation"""
+        # Reset physics simulation
+        # This would interface with Isaac Gym simulation
+        self.current_step = 0
+        
+        # Initialize robot to a stable pose
+        # This would set joint positions and velocities
+        self.joint_positions = np.zeros(10)  # Placeholder
+        self.joint_velocities = np.zeros(10)  # Placeholder
+        
+        # Return initial observation
+        obs = self._get_observation()
+        return obs
+    
+    def _get_observation(self):
+        """Get current observation from the environment"""
+        # This would get sensor data from Isaac Sim
+        # Combine joint positions, velocities, IMU readings, etc.
+        obs = np.concatenate([
+            self.joint_positions,
+            self.joint_velocities,
+            # Add other observations like IMU readings, foot contact sensors, etc.
+        ])
+        return obs
+    
+    def step(self, action):
+        """Execute action in the environment and return next state"""
+        # Apply action to robot joints
+        # This would interface with Isaac Gym physics
+        clipped_action = np.clip(action, -1.0, 1.0)
+        
+        # Step physics simulation
+        # This would update the Isaac Sim environment
+        self.current_step += 1
+        
+        # Get new observation
+        obs = self._get_observation()
+        
+        # Calculate reward
+        reward = self._compute_reward()
+        
+        # Check if episode is done
+        done = (self.current_step >= self.max_episode_steps) or self._is_fallen()
+        
+        info = {}  # Additional information can be added here
+        
+        return obs, reward, done, info
+    
+    def _compute_reward(self):
+        """Calculate reward based on current state"""
+        # Reward forward movement while maintaining balance
+        # Penalize excessive energy use and joint limits
+        reward = 0.0
+        
+        # Reward forward velocity (simplified)
+        # This would use actual velocity from simulation
+        forward_vel = 0.5  # Placeholder
+        reward += forward_vel * 10.0
+        
+        # Penalize deviation from upright position
+        # This would use IMU or orientation data
+        orientation_penalty = 0.0  # Placeholder
+        reward -= orientation_penalty * 5.0
+        
+        # Penalize joint limit violations
+        joint_limit_penalty = 0.0  # Placeholder
+        reward -= joint_limit_penalty * 2.0
+        
+        return reward
+    
+    def _is_fallen(self):
+        """Check if the robot has fallen"""
+        # This would check base link height, orientation, etc.
+        return False  # Placeholder
+    
+    def close(self):
+        """Clean up the environment"""
+        pass
+
+# PPO Implementation
+class ActorCritic(nn.Module):
+    def __init__(self, state_dim, action_dim, action_std=0.6):
+        super(ActorCritic, self).__init__()
+        
+        # Actor network (policy)
+        self.actor = nn.Sequential(
+            nn.Linear(state_dim, 256),
+            nn.Tanh(),
+            nn.Linear(256, 256),
+            nn.Tanh(),
+            nn.Linear(256, action_dim),
+            nn.Tanh()
+        )
+        
+        # Critic network (value function)
+        self.critic = nn.Sequential(
+            nn.Linear(state_dim, 256),
+            nn.Tanh(),
+            nn.Linear(256, 256),
+            nn.Tanh(),
+            nn.Linear(256, 1)
+        )
+        
+        # Action standard deviation for sampling
+        self.action_var = torch.full((action_dim,), action_std * action_std)
+        self.cov_mat = torch.diag(self.action_var)
+    
+    def forward(self):
+        raise NotImplementedError
+    
+    def act(self, state):
+        """Select action using the policy"""
+        action_mean = self.actor(state)
+        
+        cov_mat = self.cov_mat.to(state.device)
+        dist = Normal(action_mean, torch.sqrt(cov_mat))
+        
+        action = dist.sample()
+        action_logprob = dist.log_prob(action).sum(dim=1)
+        
+        return action.detach(), action_logprob.detach()
+    
+    def evaluate(self, state, action):
+        """Evaluate action for training"""
+        action_mean = self.actor(state)
+        
+        cov_mat = self.cov_mat.to(state.device)
+        dist = Normal(action_mean, torch.sqrt(cov_mat))
+        
+        action_logprobs = dist.log_prob(action).sum(dim=1)
+        dist_entropy = dist.entropy().sum(dim=1)
+        state_values = self.critic(state).squeeze()
+        
+        return action_logprobs, state_values, dist_entropy
+
+class PPO:
+    def __init__(self, state_dim, action_dim, lr=0.0003, gamma=0.99, k_epochs=80, eps_clip=0.2):
+        self.lr = lr
+        self.gamma = gamma
+        self.k_epochs = k_epochs
+        self.eps_clip = eps_clip
+        
+        self.policy = ActorCritic(state_dim, action_dim)
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
+        self.policy_old = ActorCritic(state_dim, action_dim)
+        self.policy_old.load_state_dict(self.policy.state_dict())
+        
+        self.MseLoss = nn.MSELoss()
+    
+    def update(self, state_batch, action_batch, logprob_batch, reward_batch, terminal_batch):
+        """Update the policy"""
+        # Convert to tensors
+        state_batch = torch.tensor(state_batch, dtype=torch.float)
+        action_batch = torch.tensor(action_batch, dtype=torch.float)
+        logprob_batch = torch.tensor(logprob_batch, dtype=torch.float)
+        
+        # Monte Carlo estimate of rewards
+        rewards = []
+        discounted_reward = 0
+        for reward, is_terminal in zip(reversed(reward_batch), reversed(terminal_batch)):
+            if is_terminal:
+                discounted_reward = 0
+            discounted_reward = reward + (self.gamma * discounted_reward)
+            rewards.insert(0, discounted_reward)
+        
+        # Normalizing the rewards
+        rewards = torch.tensor(rewards, dtype=torch.float)
+        rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-7)
+        
+        # Optimize policy for K epochs
+        for _ in range(self.k_epochs):
+            # Evaluate old actions and values using current policy
+            logprobs, state_values, dist_entropy = self.policy_old.evaluate(state_batch, action_batch)
+            
+            # Finding the ratio (pi_theta / pi_theta__old)
+            ratios = torch.exp(logprobs - logprob_batch)
+            
+            # Finding Surrogate Loss
+            advantages = rewards - state_values.detach()
+            surr1 = ratios * advantages
+            surr2 = torch.clamp(ratings, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
+            loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(state_values, rewards) - 0.01 * dist_entropy
+            
+            # Take gradient step
+            self.optimizer.zero_grad()
+            loss.mean().backward()
+            self.optimizer.step()
+        
+        # Copy new weights into old policy
+        self.policy_old.load_state_dict(self.policy.state_dict())
+
+def train_humanoid_locomotion():
+    """Train humanoid locomotion using PPO"""
+    env = HumanoidRLEnv()
+    
+    state_dim = env.observation_space.shape[0]
+    action_dim = env.action_space.shape[0]
+    
+    # Initialize PPO agent
+    ppo = PPO(state_dim, action_dim)
+    
+    # Training parameters
+    max_training_timesteps = int(3e6)  # 3M timesteps
+    log_freq = max_training_timesteps // 10  # Log every 10%
+    print_freq = max_training_timesteps // 100  # Print every 1%
+    
+    # Track statistics
+    total_steps = 0
+    episode_count = 0
+    
+    # Training loop
+    while total_steps < max_training_timesteps:
+        episode_reward = 0
+        state = env.reset()
+        
+        # Run one episode
+        while True:
+            # Select action
+            action, action_logprob = ppo.policy_old.act(torch.FloatTensor(state))
+            action = action.cpu().data.numpy()
+            
+            # Take action in environment
+            next_state, reward, done, _ = env.step(action)
+            
+            # Store experience in buffer
+            # This would be added to the training buffer
+            
+            # Update statistics
+            episode_reward += reward
+            total_steps += 1
+            
+            # Check if episode is finished
+            if done or total_steps >= max_training_timesteps:
+                break
+                
+            # Update state
+            state = next_state
+        
+        episode_count += 1
+        
+        # Print progress
+        if total_steps % print_freq == 0:
+            avg_reward = episode_reward / max(1, (total_steps // episode_count))
+            print(f"Steps: {total_steps}, Episode Reward: {episode_reward:.2f}, Avg Reward: {avg_reward:.2f}")
+    
+    # Save the trained model
+    torch.save(ppo.policy.state_dict(), "humanoid_locomotion_ppo.pth")
+    print("Training completed. Model saved to humanoid_locomotion_ppo.pth")
+
+if __name__ == "__main__":
+    train_humanoid_locomotion()
+```
+
+## Exercise 3.5: Isaac Sim Synthetic Data Generation
+
+**Objective:** Implement synthetic data generation pipeline using Isaac Sim.
+
+### Problem
+Create a system that generates synthetic camera images and annotations using Isaac Sim for training perception models.
+
+### Implementation Requirements
+1. Set up Isaac Sim with domain randomization
+2. Generate photorealistic images with semantic segmentation
+3. Create accurate 3D bounding box annotations
+4. Export data in standard formats
+5. Validate synthetic data quality
+
+### Solution
+Synthetic data generation script:
+```python
+import omni
+from omni.isaac.kit import SimulationApp
+from omni.isaac.core import World
+from omni.isaac.core.utils.stage import add_reference_to_stage
+from omni.isaac.synthetic_utils import SyntheticDataHelper
+from omni.isaac.synthetic_utils.sensors import *
+import numpy as np
+import cv2
+import os
+from PIL import Image
+
+# Initialize simulation
+config = {"headless": False}
+simulation_app = SimulationApp(config)
+
+# Import Isaac packages
+from omni.isaac.synthetic_utils import Annotator
+import carb
+
+class SyntheticDataGenerator:
+    def __init__(self):
+        # Initialize world
+        self.world = World(stage_units_in_meters=1.0)
+        self.sd_helper = None
+        
+        # Setup camera
+        self.setup_camera()
+        
+        # Setup annotators
+        self.setup_annotators()
+        
+        # Output directory
+        self.output_dir = os.path.join(os.path.dirname(__file__), "synthetic_data")
+        os.makedirs(self.output_dir, exist_ok=True)
+        
+    def setup_camera(self):
+        """Set up a camera in the scene"""
+        # This would create a camera prim in the scene
+        # The specific implementation depends on your scene setup
+        pass
+    
+    def setup_annotators(self):
+        """Setup annotators for semantic segmentation, bounding boxes, etc."""
+        # Setup annotator for semantic segmentation
+        self.segmentation_annotator = Annotator.acquire_annotator("SemanticSegmentation")
+        
+        # Setup annotator for bounding boxes
+        self.bbox_annotator = Annotator.acquire_annotator("BBox")
+        
+        # Setup annotator for depth
+        self.depth_annotator = Annotator.acquire_annotator("Depth")
+    
+    def generate_data_batch(self, num_samples):
+        """Generate a batch of synthetic data"""
+        for i in range(num_samples):
+            # Randomize the scene (domain randomization)
+            self.randomize_scene()
+            
+            # Step the world to update simulation
+            self.world.step(render=True)
+            
+            # Capture data from annotators
+            rgb_data = self.capture_rgb_image()
+            seg_data = self.segmentation_annotator.get_data()
+            bbox_data = self.bbox_annotator.get_data()
+            depth_data = self.depth_annotator.get_data()
+            
+            # Save the data
+            self.save_data(i, rgb_data, seg_data, bbox_data, depth_data)
+            
+            carb.log_info(f"Generated sample {i+1}/{num_samples}")
+    
+    def randomize_scene(self):
+        """Randomize scene properties for domain randomization"""
+        # Randomize lighting
+        # Randomize textures
+        # Randomize object positions/rotations
+        # Randomize camera properties
+        pass
+    
+    def capture_rgb_image(self):
+        """Capture RGB image from camera"""
+        # Implementation specific to Isaac Sim
+        # This would return RGB image data
+        pass
+    
+    def save_data(self, idx, rgb_data, seg_data, bbox_data, depth_data):
+        """Save generated synthetic data"""
+        # Save RGB image
+        rgb_path = os.path.join(self.output_dir, f"rgb_{idx:05d}.png")
+        Image.fromarray(rgb_data).save(rgb_path)
+        
+        # Save semantic segmentation
+        seg_path = os.path.join(self.output_dir, f"seg_{idx:05d}.png")
+        Image.fromarray(seg_data).save(seg_path)
+        
+        # Save bounding box annotations
+        bbox_path = os.path.join(self.output_dir, f"bbox_{idx:05d}.json")
+        import json
+        with open(bbox_path, 'w') as f:
+            json.dump(bbox_data, f)
+        
+        # Save depth data
+        depth_path = os.path.join(self.output_dir, f"depth_{idx:05d}.npy")
+        np.save(depth_path, depth_data)
+    
+    def close(self):
+        """Close the simulation"""
+        simulation_app.close()
+
+def main():
+    """Main function to run synthetic data generation"""
+    generator = SyntheticDataGenerator()
+    
+    try:
+        # Generate 1000 synthetic samples
+        generator.generate_data_batch(1000)
+        
+        carb.log_info("Synthetic data generation completed successfully")
+        
+    except Exception as e:
+        carb.log_error(f"Error during synthetic data generation: {e}")
+    
+    finally:
+        generator.close()
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+## Project 3: AI-Powered Humanoid Perception and Navigation System
+
+**Objective:** Build an integrated system combining Isaac Sim, Isaac ROS, and Nav2 for AI-powered humanoid navigation.
+
+### Requirements
+1. Create a complete Isaac Sim environment with humanoid robot
+2. Implement Isaac ROS perception pipeline
+3. Configure Nav2 for humanoid-specific navigation
+4. Integrate reinforcement learning for locomotion
+5. Implement synthetic data generation for perception training
+6. Demonstrate complete system in simulation
+
+### Implementation Steps
+1. Set up Isaac Sim with humanoid model and sensors
+2. Implement perception pipeline using Isaac ROS
+3. Configure Nav2 for humanoid navigation
+4. Train RL policy for locomotion
+5. Generate synthetic data for perception training
+6. Integrate all components and test in simulation
+7. Document system architecture and results
+
+### Evaluation Criteria
+- Completeness of AI integration
+- Performance of perception system
+- Effectiveness of navigation system
+- Quality of synthetic data generation
+- Robustness of overall system
+- Quality of documentation and results

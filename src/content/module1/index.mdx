@@ -1,0 +1,232 @@
+---
+title: "Module 1: The Robotic Nervous System (ROS 2)"
+description: "Understanding the middleware for robot control and the fundamentals of embodied intelligence"
+---
+
+import { Admonition } from '@site/src/components/Admonition';
+
+# Module 1: The Robotic Nervous System (ROS 2)
+
+## Learning Objectives
+
+By the end of this module, students will be able to:
+1. Explain the fundamental differences between Physical AI and Software AI
+2. Understand the concept of embodiment and its impact on robotic intelligence
+3. Describe key challenges in creating physically embodied systems
+4. Analyze the historical progression of humanoid robotics
+5. Identify applications of physical AI in real-world scenarios
+
+## Key Terms
+
+- **Embodiment Hypothesis**: The theory that intelligence emerges from the interaction between brain, body, and environment
+- **Moravec's Paradox**: The observation that high-level reasoning requires little computation but low-level sensorimotor skills require enormous computational resources
+- **Sense-Plan-Act Paradigm**: The traditional robotics approach where robots sense the environment, plan actions, and then execute them
+- **Degrees of Freedom (DoF)**: The number of independent movements a robotic system can make
+- **Sim-to-Real Transfer**: The process of transferring models trained in simulation to real-world robotic systems
+
+## 1.1 The Evolution of Embodied Intelligence
+
+The field of robotics has undergone a significant transformation over the past few decades. The traditional approach to robotics, often called the "sense-think-act" paradigm, involved robots that would sense their environment, process the information using computational algorithms, and then execute planned actions. This approach treated the physical body primarily as a tool for executing high-level commands, with little consideration given to how the physical form might contribute to intelligence.
+
+However, the embodiment hypothesis suggests that intelligence emerges not just from computational power, but from the interaction between an agent's physical form, its environment, and its cognitive processes. This perspective recognizes that the body itself can serve as a computational resource, with the physical structure constraining and enabling certain behaviors and cognitive processes.
+
+<Admonition type="note" title="Historical Perspective">
+The embodiment hypothesis has roots in the work of philosophers like Maurice Merleau-Ponty and cognitive scientists like Andy Clark. However, it gained prominence in robotics with the work of Rodney Brooks, who promoted "subsumption architecture" where behavior emerges from sensorimotor interactions rather than high-level planning.
+</Admonition>
+
+This shift toward embodied intelligence has profound implications for humanoid robotics. By designing robots with human-like bodies, we not only enable them to operate in human-centered environments, but we also potentially unlock new forms of intelligence that emerge from the human-like interaction between body and environment.
+
+## 1.2 Physical AI vs. Software AI: Key Differences
+
+The distinction between Physical AI and Software AI lies in the fundamental nature of their interaction with the world. Software AI operates in digital environments, manipulating symbols and data without direct physical consequences. Physical AI, on the other hand, must navigate the complexities of physics, including gravity, friction, material properties, and the uncertainty of real-world sensing.
+
+### Computational Challenges
+
+Physical AI systems must solve problems that have no equivalent in digital environments. For example, a software AI can duplicate or transfer its knowledge instantaneously, while a physical robot must learn through real-time interaction with the environment. This creates unique computational challenges related to:
+
+- **Real-time processing**: Physical systems must respond within strict time constraints to maintain stability and safety
+- **Uncertainty management**: Sensors provide noisy, incomplete information that must be processed to make reliable decisions
+- **Energy efficiency**: Physical actions consume energy, requiring optimization of both computation and motion
+
+### Mathematical Representation
+
+The mathematical models used in Physical AI often differ significantly from those in Software AI. Consider the following equation representing the dynamics of a robotic system:
+
+```
+M(q)q̈ + C(q, q̇)q̇ + G(q) = τ
+```
+
+Where:
+- `M(q)` is the mass matrix
+- `q` represents joint positions
+- `C(q, q̇)` represents Coriolis and centrifugal forces
+- `G(q)` represents gravitational forces
+- `τ` represents actuator torques
+
+<!-- Interactive Element Placeholder: Add widget to manipulate parameters and observe system response -->
+
+This equation represents the fundamental relationship between forces and motion in a physical system. Unlike neural networks that might learn from examples, these dynamics must be respected in all robot control strategies.
+
+## 1.3 Historical Milestones in Humanoid Robotics
+
+The development of humanoid robots has been punctuated by significant milestones that have advanced both hardware and software capabilities. Understanding this history provides insight into the current state of Physical AI and hints at future possibilities.
+
+- **1970s-1980s**: Early mechanical humanoid systems, primarily focused on mimicking human appearance and basic movement
+- **1990s**: Introduction of dynamic walking by Honda's P series (P1, P2, P3)
+- **2000s**: ASIMO by Honda demonstrates sophisticated bipedal locomotion and basic interaction
+- **2010s**: ATLAS by Boston Dynamics showcases dynamic movement and manipulation under challenging conditions
+- **2020s**: Digit by Agility Robotics and HumanPlus by Tesla represent commercialization attempts
+
+<Admonition type="tip" title="Technical Insight">
+The progression of humanoid robots shows an increasing emphasis on dynamic stability rather than static balance. Early systems required static balance (center of mass within support polygon), while modern systems use dynamic balance principles like Capture Point (CP) and Zero Moment Point (ZMP).
+</Admonition>
+
+### Zero Moment Point (ZMP) Control
+
+One fundamental concept in humanoid locomotion is the Zero Moment Point, which can be calculated as:
+
+```
+ZMP_x = x - (z - z_ref) / g * ẍ
+ZMP_y = y - (z - z_ref) / g * ÿ
+```
+
+Where (x, y, z) is the center of mass position, z_ref is a reference height, and g is gravitational acceleration.
+
+## 1.4 Fundamental Challenges in Physical Embodiment
+
+Creating effective physical AI systems presents numerous challenges that have no parallel in digital AI:
+
+### Moravec's Paradox
+
+Hans Moravec observed that tasks we consider "intelligent," like playing chess, were easier for robots than tasks that seem "simple," like navigating a room. This paradox remains relevant today and explains why humanoid robots excel at some cognitive tasks but struggle with basic physical tasks.
+
+### Control Complexity
+
+A typical humanoid robot has 30+ degrees of freedom, each requiring independent control. The state space of such systems is enormous, making traditional control methods computationally intractable for complex tasks.
+
+### Real-time Requirements
+
+Physical systems operate under strict real-time constraints. For example, maintaining balance typically requires control updates at 100-1000 Hz, leaving little time for complex planning or learning algorithms.
+
+### Energy Efficiency
+
+Biological systems are remarkably energy efficient. A human brain uses about 20W of power, while current AI systems can consume kilowatts. This disparity makes it challenging to create humanoid robots with human-like autonomy.
+
+## 1.5 Applications and Societal Impact
+
+Physical AI systems have the potential to address numerous societal challenges, particularly in areas where human-like form and interaction capabilities are beneficial:
+
+### Healthcare and Elderly Care
+
+Humanoid robots can assist with tasks that require human-like dexterity and social interaction, such as helping elderly patients with daily activities or providing companionship.
+
+### Education and Research
+
+Humanoid robots serve as excellent platforms for studying embodied cognition and developing new AI algorithms that work in physical environments.
+
+### Industrial Applications
+
+While current industrial robots are not humanoid, future applications may benefit from human-like form factors for tasks requiring dexterity and adaptability.
+
+## 1.6 Course Overview and Learning Path
+
+This course will take you through the complete development lifecycle of Physical AI systems, from middleware configuration to AI deployment on real hardware.
+
+### Module Structure
+
+1. **Module 1: The Robotic Nervous System (ROS 2)** - Middleware for robot control
+2. **Module 2: The Digital Twin (Gazebo & Unity)** - Physics simulation and environment building
+3. **Module 3: The AI-Robot Brain (NVIDIA Isaac™)** - Advanced perception and training
+4. **Module 4: Vision-Language-Action (VLA)** - Convergence of LLMs and Robotics
+
+### The Learning Path
+
+Throughout this course, we'll follow a progression from simulation to hardware deployment:
+
+1. Simulate robotic systems using Gazebo and Isaac Sim
+2. Develop control algorithms in software
+3. Test algorithms in simulation
+4. Deploy to physical robots
+
+This approach allows us to develop and test safely in simulation before attempting real-world deployment.
+
+---
+
+## Discussion Questions
+
+1. How does the embodiment hypothesis challenge traditional AI approaches?
+2. Explain how Moravec's paradox manifests in current humanoid robots.
+3. What advantages does a humanoid form provide for operating in human environments?
+4. Discuss the computational vs. energetic efficiency of biological vs. artificial systems.
+5. How might sim-to-real transfer techniques help address the challenges of physical embodiment?
+
+## Practical Exercises
+
+### Exercise 1: Simulation Environment Setup
+Set up a basic ROS 2 environment with Dashing or Foxy distribution. Create a simple launch file to start basic ROS 2 nodes for communication practice.
+
+### Exercise 2: URDF Exploration
+Download a humanoid robot model (e.g., HRP-2 or Atlas) and examine its URDF (Unified Robot Description Format) file. Identify key joints and degrees of freedom, and calculate the total number of controllable parameters.
+
+### Exercise 3: Balance Simulation
+Create a simulation of an inverted pendulum model in Gazebo to understand the basic principles of balance control. Implement a simple controller to maintain balance and experiment with different parameters.
+
+## References
+
+1. Pfeifer, R., & Bongard, J. (2006). *How the body shapes the way we think: A new view of intelligence*. MIT Press.
+2. Brooks, R. A. (1991). Intelligence without representation. *Artificial intelligence*, 47(1-3), 139-159.
+3. Metta, G., Natale, L., Nori, F., Sandini, G., Vernon, D., Fadiga, L., ... & Tsagarakis, N. (2008). The iCub humanoid robot: an open-platform for research in embodied cognition. *Proceedings of the 8th workshop on performance metrics for intelligent systems*, 50-56.
+4. Cheng, G., Righetti, L., Buchli, J., & Pastor, P. (2011). TRIPLE: A bipedal walking controller. *Humanoids*, 398-403.
+5. Kajita, S., Kanehiro, F., Kaneko, K., Fujiwara, K., Harada, K., Yokoi, K., & Hirukawa, H. (2003). Biped walking pattern generation by using preview control of zero-moment point. *Proceedings 2003 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS 2003)*, 2, 1649-1655.
+6. Moravec, H. (1988). *Mind children: The future of robot and human intelligence*. Harvard University Press.
+7. Khatib, O., Park, H. J., Foroughi, H., Hong, Y., Park, I., Jang, J., ... & Kim, J. H. (2014). Humanoid manipulation through kinematic control. *International Conference on Humanoid Robots*, 626-631.
+8. Featherstone, R. (2008). *Rigid body dynamics algorithms*. Springer Science & Business Media.
+9. Tedrake, R. (2009). *Underactuated robotics: Algorithms for walking, running, swimming, flying, and manipulation*. MIT Press.
+10. Siciliano, B., & Khatib, O. (Eds.). (2016). *Springer handbook of robotics*. Springer.
+
+## Exercises Solutions
+
+### Solution 1: Simulation Environment Setup
+```python
+# Install ROS 2 Dashing/Foxy following official instructions
+# Create a basic publisher/subscriber in Python
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+class MinimalPublisher(Node):
+    def __init__(self):
+        super().__init__('minimal_publisher')
+        self.publisher_ = self.create_publisher(String, 'topic', 10)
+        timer_period = 0.5  # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.i = 0
+
+    def timer_callback(self):
+        msg = String()
+        msg.data = 'Hello World: %d' % self.i
+        self.publisher_.publish(msg)
+        self.get_logger().info('Publishing: "%s"' % msg.data)
+        self.i += 1
+
+def main(args=None):
+    rclpy.init(args=args)
+    minimal_publisher = MinimalPublisher()
+    rclpy.spin(minimal_publisher)
+    minimal_publisher.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+### Solution 2: URDF Exploration
+- Locate sample robot models in ROS packages like `hrp2_bringup` or `atlas_description`
+- Use `rviz` to visualize the model: `ros2 run rviz2 rviz2`
+- Count joints in the URDF file to determine degrees of freedom
+- Calculate DOF total based on joint types (revolute, prismatic, etc.)
+
+### Solution 3: Balance Simulation
+- Use `gazebo_ros` packages to start Gazebo with ROS 2
+- Implement a PID controller that adjusts base position based on COM deviation
+- Experiment with different control parameters and observe stability

@@ -1,0 +1,26 @@
+{
+  "id": "overview",
+  "title": "Course Overview",
+  "description": "The Evolution of Robotics Education",
+  "source": "@site/docs/overview.mdx",
+  "sourceDirName": ".",
+  "slug": "/overview",
+  "permalink": "/textbook/docs/overview",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/spec-ai/textbook/tree/main/docs/overview.mdx",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Course Overview"
+  },
+  "sidebar": "textbookSidebar",
+  "previous": {
+    "title": "Introduction to Physical AI & Humanoid Robotics",
+    "permalink": "/textbook/docs/intro"
+  },
+  "next": {
+    "title": "Module 1: The Robotic Nervous System (ROS 2)",
+    "permalink": "/textbook/docs/module1/"
+  }
+}

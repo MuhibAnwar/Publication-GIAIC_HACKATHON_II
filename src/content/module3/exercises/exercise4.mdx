@@ -1,0 +1,617 @@
+---
+title: "Exercise 4: Whole-Body State Estimator"
+description: "Implement a complete state estimator that combines multiple sensors for humanoid robot state estimation"
+---
+
+import { Admonition } from '@site/src/components/Admonition';
+
+# Exercise 4: Whole-Body State Estimator
+
+## Learning Objectives
+
+- Understand whole-body state estimation for humanoid robots
+- Implement a state estimator that combines IMU, encoder, and contact sensor data
+- Integrate multiple sensor modalities into a coherent state estimate
+- Apply Kalman filtering techniques to humanoid state estimation
+
+## Problem Statement
+
+Whole-body state estimation is crucial for humanoid robots to maintain balance and perform dynamic tasks. This requires combining data from multiple sensor types: IMU for orientation and acceleration, encoders for joint positions, force/torque sensors for contact information, and potentially other sensors. In this exercise, you will implement a state estimator that fuses these diverse data sources into a coherent estimate of the robot's state.
+
+The state estimator will focus on estimating the center of mass (CoM) position and velocity, base orientation, and contact states, which are essential for balance control.
+
+## Starter Code Template
+
+First, create a new ROS2 package for this exercise:
+
+```bash
+# Create the package
+ros2 pkg create --build-type ament_python whole_body_state_estimator
+cd whole_body_state_estimator/whole_body_state_estimator
+
+# Create the main Python file
+touch state_estimator_node.py
+```
+
+Here's your starter code for `state_estimator_node.py`:
+
+```python
+#!/usr/bin/env python3
+"""
+Whole-Body State Estimator for Humanoid Robotics
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu, JointState
+from geometry_msgs.msg import Vector3Stamped, WrenchStamped
+from std_msgs.msg import Bool
+import numpy as np
+from collections import deque
+import tf_transformations
+
+class StateEstimatorNode(Node):
+    def __init__(self):
+        super().__init__('state_estimator_node')
+        
+        # Declare and get parameters
+        self.declare_parameter('imu_topic', 'imu/data')
+        self.declare_parameter('joint_topic', 'joint_states')
+        self.declare_parameter('l_foot_topic', 'l_foot_force')
+        self.declare_parameter('r_foot_topic', 'r_foot_force')
+        self.declare_parameter('publish_rate', 200)  # Hz
+        self.declare_parameter('robot_mass', 75.0)  # kg
+        self.declare_parameter('foot_size_x', 0.2)  # meters
+        self.declare_parameter('foot_size_y', 0.1)  # meters
+        
+        # Get parameter values
+        self.imu_topic = self.get_parameter('imu_topic').value
+        self.joint_topic = self.get_parameter('joint_topic').value
+        self.l_foot_topic = self.get_parameter('l_foot_topic').value
+        self.r_foot_topic = self.get_parameter('r_foot_topic').value
+        self.robot_mass = self.get_parameter('robot_mass').value
+        
+        # Create subscriptions for all sensor types
+        self.imu_sub = self.create_subscription(Imu, self.imu_topic, self.imu_callback, 10)
+        self.joint_sub = self.create_subscription(JointState, self.joint_topic, self.joint_callback, 10)
+        self.l_foot_sub = self.create_subscription(WrenchStamped, self.l_foot_topic, self.l_foot_callback, 10)
+        self.r_foot_sub = self.create_subscription(WrenchStamped, self.r_foot_topic, self.r_foot_callback, 10)
+        
+        # Create publishers for state estimates
+        self.com_pub = self.create_publisher(Vector3Stamped, 'center_of_mass', 10)
+        self.base_pose_pub = self.create_publisher(Vector3Stamped, 'base_pose', 10)
+        self.contact_state_pub = self.create_publisher(Bool, 'contact_state', 10)
+        
+        # Initialize state vector [pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, roll, pitch, yaw, ang_vel_x, ang_vel_y, ang_vel_z]
+        self.state = np.zeros(12)
+        
+        # Initialize error covariance matrix
+        self.P = np.eye(12) * 0.1
+        
+        # Initialize kinematic model parameters
+        self.kinematic_model = self.initialize_kinematic_model()
+        
+        # Store previous timestamps for numerical differentiation
+        self.prev_joint_state = None
+        self.prev_time = None
+        
+        # Initialize contact state
+        self.left_contact = False
+        self.right_contact = False
+        
+        # Timer for prediction and state updates
+        publish_period = 1.0 / self.get_parameter('publish_rate').value
+        self.timer = self.create_timer(publish_period, self.publish_state)
+        
+        self.get_logger().info('Whole-Body State Estimator Node Started')
+
+    def initialize_kinematic_model(self):
+        """
+        Initialize the kinematic model of the robot
+        """
+        # TODO: Create a simplified kinematic model of the humanoid
+        # This can be a basic stick figure model or use URDF if available
+        # Store joint angles to position mappings for CoM calculation
+        return {}
+
+    def imu_callback(self, msg):
+        """
+        Process IMU data for orientation and acceleration
+        """
+        # TODO: Extract orientation from quaternion
+        # TODO: Extract angular velocity and linear acceleration
+        # TODO: Update state estimate using IMU data
+        pass
+
+    def joint_callback(self, msg):
+        """
+        Process joint encoder data
+        """
+        # TODO: Extract joint positions
+        # TODO: Update kinematic model with new joint angles
+        # TODO: Calculate CoM based on updated kinematic model
+        # TODO: Update state estimate with kinematic information
+        pass
+
+    def l_foot_callback(self, msg):
+        """
+        Process left foot force/torque data
+        """
+        # TODO: Use force/torque data to determine contact state
+        # TODO: Update contact state for left foot
+        pass
+
+    def r_foot_callback(self, msg):
+        """
+        Process right foot force/torque data
+        """
+        # TODO: Use force/torque data to determine contact state
+        # TODO: Update contact state for right foot
+        pass
+
+    def prediction_step(self, dt):
+        """
+        Prediction step of the state estimator
+        """
+        # TODO: Predict next state based on current state and control inputs
+        # Use IMU measurements as control inputs for orientation prediction
+        # Use joint velocities for position prediction
+        pass
+
+    def update_step(self):
+        """
+        Update step of the state estimator
+        """
+        # TODO: Update state estimate based on sensor measurements
+        # Fuse IMU, encoder, and contact information
+        pass
+
+    def calculate_com(self, joint_positions):
+        """
+        Calculate center of mass based on joint positions
+        """
+        # TODO: Implement CoM calculation using joint positions and a simplified mass distribution model
+        pass
+
+    def publish_state(self):
+        """
+        Publish the current state estimate
+        """
+        # TODO: Create and publish messages for CoM, base pose, and contact state
+        pass
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = StateEstimatorNode()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Detailed Specifications
+
+1. **State Vector Definition**:
+    - Define a state vector with 12 elements: `[pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, roll, pitch, yaw, ang_vel_x, ang_vel_y, ang_vel_z]`
+    - Implement a prediction step that propagates the state forward in time using IMU measurements
+    - Implement an update step that corrects the state using encoder and contact measurements
+
+2. **Sensor Fusion**:
+    - Use IMU data to correct orientation estimates
+    - Use encoder data to refine position estimates through forward kinematics
+    - Use contact sensors to determine when feet are in contact with ground (affects dynamics model)
+
+3. **Kinematic Model**:
+    - Implement a simplified kinematic model to calculate CoM from joint angles
+    - Use basic geometric approximations for body segments (cylinders, boxes)
+    - Consider a fixed mass distribution for each body segment
+
+4. **Contact Detection**:
+    - Use force/torque sensors in the feet to determine contact state
+    - Implement threshold-based detection for contact/non-contact
+    - Consider both normal forces and moments for robust detection
+
+## Test Cases for Validation
+
+1. **Static Pose Verification**:
+    - In static poses, state estimator should output consistent values
+    - CoM position should match kinematic calculation
+
+2. **Dynamic Motion**:
+    - During dynamic motions, state estimates should be smooth and physically plausible
+    - Contact states should correctly reflect actual robot contacts
+
+3. **Sensor Failure Recovery**:
+    - When one sensor type fails, estimator should gracefully degrade
+    - Remaining sensors should continue to provide reasonable estimates
+
+4. **Zero Velocity Update**:
+    - During foot contact, zero velocity assumption should improve state estimate
+    - Drift in position estimate should be reduced during contact phases
+
+## Hints and Common Pitfalls
+
+<Admonition type="tip" title="Kinematic CoM Calculation">
+To calculate the center of mass, use a simplified geometric model of the robot. Break the robot down into basic geometric shapes (cylinders, boxes), assign masses to each segment, and calculate the weighted average of segment centers based on joint angles.
+</Admonition>
+
+<Admonition type="danger" title="IMU Integration Drift">
+Direct integration of IMU acceleration and angular velocity measurements will result in drift over time. Ensure your estimator properly fuses these measurements with other sensors that provide absolute references (like contact with ground).
+</Admonition>
+
+- Use appropriate coordinate frame transformations when fusing data from different sensors
+- Consider the time delays between different sensor measurements
+- Implement checks to ensure physical plausibility of estimates (e.g., CoM should be within support polygon during standing)
+- Test your estimator with both simulated and real robot data if possible
+
+## Expected Output/Visualization
+
+1. **Terminal Output**:
+    - Node starts successfully with appropriate logging
+    - State estimates published at specified rate
+
+2. **RViz Visualization**:
+    - CoM visualization as a moving marker
+    - Robot state visualization with estimated pose
+    - Contact state visualization (active contacts highlighted)
+
+3. **rqt_plot Visualization**:
+    - CoM trajectory over time
+    - Estimated vs. actual encoder positions for validation
+
+## Solution Template
+
+```python
+#!/usr/bin/env python3
+"""
+Whole-Body State Estimator for Humanoid Robotics - SOLUTION
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu, JointState
+from geometry_msgs.msg import Vector3Stamped, WrenchStamped
+from std_msgs.msg import Bool
+import numpy as np
+from collections import deque
+import tf_transformations
+
+class StateEstimatorNode(Node):
+    def __init__(self):
+        super().__init__('state_estimator_node')
+        
+        # Declare and get parameters
+        self.declare_parameter('imu_topic', 'imu/data')
+        self.declare_parameter('joint_topic', 'joint_states')
+        self.declare_parameter('l_foot_topic', 'l_foot_force')
+        self.declare_parameter('r_foot_topic', 'r_foot_force')
+        self.declare_parameter('publish_rate', 200)  # Hz
+        self.declare_parameter('robot_mass', 75.0)  # kg
+        self.declare_parameter('foot_size_x', 0.2)  # meters
+        self.declare_parameter('foot_size_y', 0.1)  # meters
+        self.declare_parameter('contact_force_threshold', 50.0)  # Newtons
+        self.declare_parameter('process_noise_position', 0.01)
+        self.declare_parameter('process_noise_velocity', 0.1)
+        self.declare_parameter('process_noise_orientation', 0.01)
+        self.declare_parameter('measurement_noise_position', 0.05)
+        self.declare_parameter('measurement_noise_orientation', 0.01)
+        
+        # Get parameter values
+        self.imu_topic = self.get_parameter('imu_topic').value
+        self.joint_topic = self.get_parameter('joint_topic').value
+        self.l_foot_topic = self.get_parameter('l_foot_topic').value
+        self.r_foot_topic = self.get_parameter('r_foot_topic').value
+        self.robot_mass = self.get_parameter('robot_mass').value
+        self.contact_force_threshold = self.get_parameter('contact_force_threshold').value
+        
+        # Create subscriptions for all sensor types
+        self.imu_sub = self.create_subscription(Imu, self.imu_topic, self.imu_callback, 10)
+        self.joint_sub = self.create_subscription(JointState, self.joint_topic, self.joint_callback, 10)
+        self.l_foot_sub = self.create_subscription(WrenchStamped, self.l_foot_topic, self.l_foot_callback, 10)
+        self.r_foot_sub = self.create_subscription(WrenchStamped, self.r_foot_topic, self.r_foot_callback, 10)
+        
+        # Create publishers for state estimates
+        self.com_pub = self.create_publisher(Vector3Stamped, 'center_of_mass', 10)
+        self.base_pose_pub = self.create_publisher(Vector3Stamped, 'base_pose', 10)
+        self.contact_state_pub = self.create_publisher(Bool, 'contact_state', 10)
+        
+        # Initialize state vector [pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, roll, pitch, yaw, ang_vel_x, ang_vel_y, ang_vel_z]
+        self.state = np.zeros(12)
+        self.state[2] = 0.8  # Initial height assumption
+        
+        # Initialize error covariance matrix
+        self.P = np.eye(12, dtype=np.float64) * 0.1
+        
+        # Initialize kinematic model parameters
+        self.kinematic_model = self.initialize_kinematic_model()
+        
+        # Store previous timestamps for numerical differentiation
+        self.prev_joint_state = None
+        self.prev_time = None
+        
+        # Initialize contact state
+        self.left_contact = False
+        self.right_contact = False
+        
+        # Initialize last update time
+        self.last_update_time = None
+        
+        # Process noise and measurement noise
+        self.Q = self.initialize_process_noise()
+        self.R = self.initialize_measurement_noise()
+        
+        # Timer for prediction and state updates
+        publish_period = 1.0 / self.get_parameter('publish_rate').value
+        self.timer = self.create_timer(publish_period, self.publish_state)
+        
+        self.get_logger().info('Whole-Body State Estimator Node Started')
+
+    def initialize_kinematic_model(self):
+        """
+        Initialize the kinematic model of the robot
+        """
+        # Simplified model: assume fixed link lengths and joint angle to position mapping
+        # In practice, this would be replaced with a proper kinematic chain
+        model = {
+            'link_lengths': {
+                'torso_height': 0.6,
+                'leg_length': 0.45,
+                'foot_offset': 0.1
+            },
+            'segment_masses': {
+                'head': 5.0,
+                'torso': 30.0,
+                'upper_leg': 10.0,
+                'lower_leg': 8.0,
+                'foot': 2.0
+            }
+        }
+        return model
+
+    def initialize_process_noise(self):
+        """
+        Initialize process noise covariance matrix
+        """
+        Q = np.zeros((12, 12))
+        
+        # Position process noise
+        pos_noise = self.get_parameter('process_noise_position').value
+        vel_noise = self.get_parameter('process_noise_velocity').value
+        orient_noise = self.get_parameter('process_noise_orientation').value
+        
+        Q[0:3, 0:3] = np.eye(3) * pos_noise   # Position
+        Q[3:6, 3:6] = np.eye(3) * vel_noise   # Velocity
+        Q[6:9, 6:9] = np.eye(3) * orient_noise  # Orientation
+        Q[9:12, 9:12] = np.eye(3) * vel_noise  # Angular velocity
+        
+        return Q
+
+    def initialize_measurement_noise(self):
+        """
+        Initialize measurement noise covariance matrix
+        """
+        R = np.zeros((6, 6))  # 3 for position, 3 for orientation
+        
+        pos_noise = self.get_parameter('measurement_noise_position').value
+        orient_noise = self.get_parameter('measurement_noise_orientation').value
+        
+        R[0:3, 0:3] = np.eye(3) * pos_noise      # Position measurement noise
+        R[3:6, 3:6] = np.eye(3) * orient_noise   # Orientation measurement noise
+        
+        return R
+
+    def imu_callback(self, msg):
+        """
+        Process IMU data for orientation and acceleration
+        """
+        # Extract orientation from quaternion
+        quat = [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w]
+        roll, pitch, yaw = tf_transformations.euler_from_quaternion(quat)
+        
+        # Extract angular velocity
+        angular_vel = np.array([
+            msg.angular_velocity.x,
+            msg.angular_velocity.y,
+            msg.angular_velocity.z
+        ])
+        
+        # Extract linear acceleration (in sensor frame)
+        linear_acc = np.array([
+            msg.linear_acceleration.x,
+            msg.linear_acceleration.y,
+            msg.linear_acceleration.z
+        ])
+        
+        # Update orientation in state vector
+        self.state[6] = roll
+        self.state[7] = pitch
+        self.state[8] = yaw
+        
+        # Update angular velocity in state vector
+        self.state[9] = angular_vel[0]
+        self.state[10] = angular_vel[1]
+        self.state[11] = angular_vel[2]
+        
+        # Get current time to compute dt
+        current_time = self.get_clock().now().nanoseconds / 1e9
+        dt = 0.01  # Default time step
+        if self.last_update_time is not None:
+            dt = current_time - self.last_update_time
+        
+        self.last_update_time = current_time
+        
+        # Perform prediction step with IMU data
+        self.prediction_step(dt, linear_acc)
+
+    def joint_callback(self, msg):
+        """
+        Process joint encoder data
+        """
+        # For simplicity, we'll update our kinematic model with new joint angles
+        # In a real implementation, this would involve forward kinematics
+        
+        # Store joint state for CoM calculation
+        self.current_joint_positions = dict(zip(msg.name, msg.position))
+        
+        # Update CoM estimate based on joint configuration
+        com_pos = self.calculate_com(self.current_joint_positions)
+        self.state[0:3] = com_pos  # Update position in state vector
+        
+        # Update velocity based on joint velocity if available
+        if len(msg.velocity) == len(msg.position):
+            joint_velocities = dict(zip(msg.name, msg.velocity))
+            # Use joint velocities to estimate CoM velocity (simplified)
+            # This would require a more complex Jacobian-based approach in practice
+
+    def l_foot_callback(self, msg):
+        """
+        Process left foot force/torque data
+        """
+        # Determine if foot is in contact based on force magnitude
+        force_magnitude = np.sqrt(
+            msg.wrench.force.x**2 + 
+            msg.wrench.force.y**2 + 
+            msg.wrench.force.z**2
+        )
+        
+        self.left_contact = force_magnitude > self.contact_force_threshold
+
+    def r_foot_callback(self, msg):
+        """
+        Process right foot force/torque data
+        """
+        # Determine if foot is in contact based on force magnitude
+        force_magnitude = np.sqrt(
+            msg.wrench.force.x**2 + 
+            msg.wrench.force.y**2 + 
+            msg.wrench.force.z**2
+        )
+        
+        self.right_contact = force_magnitude > self.contact_force_threshold
+
+    def prediction_step(self, dt, linear_acc_imu):
+        """
+        Prediction step of the state estimator (Extended Kalman Filter)
+        """
+        if dt <= 0:
+            return
+            
+        # Update state based on dynamics model
+        # Position update: x_k+1 = x_k + v_k * dt + 0.5 * a_k * dt^2
+        self.state[0:3] = self.state[0:3] + self.state[3:6] * dt + 0.5 * linear_acc_imu * dt**2
+        
+        # Velocity update: v_k+1 = v_k + a_k * dt
+        self.state[3:6] = self.state[3:6] + linear_acc_imu * dt
+        
+        # Orientation update: θ_k+1 = θ_k + ω_k * dt (simplified)
+        self.state[6:9] = self.state[6:9] + self.state[9:12] * dt
+        
+        # For EKF, we'd also update the covariance matrix P based on the state transition model
+        # Simplified approach here: just add process noise
+        self.P += self.Q * dt
+
+    def calculate_com(self, joint_positions):
+        """
+        Calculate center of mass based on joint positions
+        """
+        # Simplified CoM calculation using a basic model
+        # In practice, this would use a full kinematic model with link masses
+        
+        # For this example, we'll return a basic estimate
+        # In a real implementation, you'd use forward kinematics to calculate
+        # the 3D positions of each body segment and compute the weighted average
+        
+        # Placeholder - return current CoM with a simple adjustment based on joint positions
+        current_com = self.state[0:3].copy()
+        
+        # In a real implementation, this would update based on actual joint angles
+        # For now, we'll just return the current state position
+        return current_com
+
+    def publish_state(self):
+        """
+        Publish the current state estimate
+        """
+        # Publish center of mass estimate
+        com_msg = Vector3Stamped()
+        com_msg.header.stamp = self.get_clock().now().to_msg()
+        com_msg.header.frame_id = 'com_estimate'
+        com_msg.vector.x = float(self.state[0])
+        com_msg.vector.y = float(self.state[1])
+        com_msg.vector.z = float(self.state[2])
+        self.com_pub.publish(com_msg)
+        
+        # Publish base pose estimate
+        base_pose_msg = Vector3Stamped()
+        base_pose_msg.header.stamp = self.get_clock().now().to_msg()
+        base_pose_msg.header.frame_id = 'base_pose_estimate'
+        base_pose_msg.vector.x = float(self.state[6])  # roll
+        base_pose_msg.vector.y = float(self.state[7])  # pitch
+        base_pose_msg.vector.z = float(self.state[8])  # yaw
+        self.base_pose_pub.publish(base_pose_msg)
+        
+        # Publish contact state (true if either foot is in contact)
+        contact_msg = Bool()
+        contact_msg.data = self.left_contact or self.right_contact
+        self.contact_state_pub.publish(contact_msg)
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = StateEstimatorNode()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Dependencies and Setup Instructions
+
+1. **Required Packages**:
+    ```bash
+    pip3 install numpy transforms3d
+    sudo apt install ros-humble-sensor-msgs ros-humble-geometry-msgs
+    ```
+
+2. **Package.xml additions**:
+    ```xml
+    <depend>sensor_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>std_msgs</depend>
+    <depend>rclpy</depend>
+    ```
+
+3. **Setup.py additions**:
+    ```python
+    entry_points={
+        'console_scripts': [
+            'state_estimator_node = whole_body_state_estimator.state_estimator_node:main',
+        ],
+    },
+    ```
+
+## Running the Exercise
+
+1. Build your package: `colcon build --packages-select whole_body_state_estimator`
+2. Source your workspace: `source install/setup.bash`
+3. In one terminal, run a simulation that provides IMU, joint states, and foot force/torque data
+4. In another terminal, run: `ros2 run whole_body_state_estimator state_estimator_node`
+5. Monitor the state estimates:
+   - `ros2 topic echo /center_of_mass`
+   - `ros2 topic echo /base_pose`
+   - `ros2 topic echo /contact_state`
+
+This exercise provides hands-on experience with the critical task of state estimation in humanoid robotics, which is fundamental for stable control and safe operation.

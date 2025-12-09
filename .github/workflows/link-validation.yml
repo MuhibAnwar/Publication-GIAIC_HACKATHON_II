@@ -1,0 +1,52 @@
+name: Link Validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 1 * *'  # Run monthly
+
+jobs:
+  linkchecker:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Link Checker
+      uses: lycheeverse/lychee-action@v1.8.0
+      with:
+        args: --verbose --no-progress --exclude-mail './**/*.md' './**/*.mdx'
+        fail: true
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        
+  html-validate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build website
+      run: npm run build
+      
+    - name: HTMLHint for Markdown
+      run: |
+        if command -v npx > /dev/null; then
+          if npm list --depth=0 | grep -q "htmlhint"; then
+            npx htmlhint "build/**/*.html"
+          else
+            echo "HTMLHint not available, skipping HTML validation"
+          fi
+        fi

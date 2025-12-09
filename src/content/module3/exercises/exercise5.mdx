@@ -1,0 +1,753 @@
+---
+title: "Exercise 5: Multi-Sensor Calibration Routine"
+description: "Implement a calibration routine to determine sensor biases, scale factors, and alignment parameters"
+---
+
+import { Admonition } from '@site/src/components/Admonition';
+
+# Exercise 5: Multi-Sensor Calibration Routine
+
+## Learning Objectives
+
+- Understand the importance of sensor calibration in humanoid robotics
+- Implement calibration routines for IMU, encoder, and force sensors
+- Perform hand-eye calibration between different sensor systems
+- Validate calibration results and quantify sensor accuracy
+
+## Problem Statement
+
+Accurate sensor measurements are essential for humanoid robot control, but sensors have inherent biases, scale factors, and alignment errors that must be calibrated. In this exercise, you will implement a comprehensive calibration routine that determines these parameters for multiple sensor types commonly found on humanoid robots.
+
+The calibration will include determining IMU biases and scale factors, encoder alignment offsets, and spatial relationships between sensors. This is crucial for accurate state estimation and control.
+
+## Starter Code Template
+
+First, create a new ROS2 package for this exercise:
+
+```bash
+# Create the package
+ros2 pkg create --build-type ament_python sensor_calibration
+cd sensor_calibration/sensor_calibration
+
+# Create the main Python file
+touch calibration_routine.py
+```
+
+Here's your starter code for `calibration_routine.py`:
+
+```python
+#!/usr/bin/env python3
+"""
+Multi-Sensor Calibration Routine for Humanoid Robotics
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu, JointState, MagneticField
+from geometry_msgs.msg import Vector3Stamped, WrenchStamped
+from std_msgs.msg import String
+import numpy as np
+import statistics
+from collections import deque
+import tf_transformations
+
+class CalibrationRoutine(Node):
+    def __init__(self):
+        super().__init__('calibration_routine')
+        
+        # Declare and get parameters
+        self.declare_parameter('imu_topic', 'imu/data')
+        self.declare_parameter('joint_topic', 'joint_states')
+        self.declare_parameter('magnetic_topic', 'imu/mag')  # If available
+        self.declare_parameter('wrench_topic', 'ft_sensor')  # Force/torque sensor
+        self.declare_parameter('calibration_samples', 500)
+        self.declare_parameter('stationary_threshold', 0.05)
+        self.declare_parameter('static_duration', 3.0)  # seconds to wait in static position
+        
+        # Get parameter values
+        self.imu_topic = self.get_parameter('imu_topic').value
+        self.joint_topic = self.get_parameter('joint_topic').value
+        self.magnetic_topic = self.get_parameter('magnetic_topic').value
+        self.wrench_topic = self.get_parameter('wrench_topic').value
+        self.calibration_samples = self.get_parameter('calibration_samples').value
+        self.stationary_threshold = self.get_parameter('stationary_threshold').value
+        self.static_duration = self.get_parameter('static_duration').value
+        
+        # Create subscriptions
+        self.imu_sub = self.create_subscription(Imu, self.imu_topic, self.imu_callback, 10)
+        self.joint_sub = self.create_subscription(JointState, self.joint_topic, self.joint_callback, 10)
+        
+        # Optional subscriptions (if available)
+        try:
+            self.mag_sub = self.create_subscription(MagneticField, self.magnetic_topic, self.mag_callback, 10)
+        except:
+            self.get_logger().info('Magnetic field topic not available')
+        
+        try:
+            self.wrench_sub = self.create_subscription(WrenchStamped, self.wrench_topic, self.wrench_callback, 10)
+        except:
+            self.get_logger().info('Wrench topic not available')
+        
+        # Create publishers
+        self.status_pub = self.create_publisher(String, 'calibration_status', 10)
+        
+        # Data buffers for calibration
+        self.imu_buffer = deque(maxlen=self.calibration_samples)
+        self.joint_buffer = deque(maxlen=self.calibration_samples)
+        self.mag_buffer = deque(maxlen=self.calibration_samples)
+        self.wrench_buffer = deque(maxlen=self.calibration_samples)
+        
+        # Calibration results
+        self.calibration_results = {
+            'imu_bias': np.zeros(3),
+            'imu_scale': np.ones(3),
+            'encoder_offsets': {},
+            'mag_bias': np.zeros(3),
+            'mag_scale': np.ones(3),
+            'sensor_alignments': {}
+        }
+        
+        # Calibration state
+        self.calibration_step = 0  # 0=not started, 1=collecting, 2=processing, 3=complete
+        self.static_start_time = None
+        self.is_static = False
+        
+        # Timer for calibration checks
+        self.timer = self.create_timer(0.1, self.calibration_timer_callback)
+        
+        self.get_logger().info('Multi-Sensor Calibration Routine Started')
+
+    def imu_callback(self, msg):
+        """
+        Process IMU data for calibration
+        """
+        # TODO: Store IMU data in buffer during calibration
+        # Check if the robot is in a static position before storing
+        pass
+
+    def joint_callback(self, msg):
+        """
+        Process joint encoder data for calibration
+        """
+        # TODO: Store joint data in buffer during calibration
+        # Use joint data to determine if robot is in static position
+        pass
+
+    def mag_callback(self, msg):
+        """
+        Process magnetometer data for calibration
+        """
+        # TODO: Store magnetometer data in buffer during calibration
+        pass
+
+    def wrench_callback(self, msg):
+        """
+        Process force/torque sensor data for calibration
+        """
+        # TODO: Store wrench data in buffer during calibration
+        pass
+
+    def calibration_timer_callback(self):
+        """
+        Timer callback for calibration state management
+        """
+        # TODO: Implement state machine for calibration process
+        # Check if robot is stationary
+        # Collect data during static periods
+        # Process collected data
+        # Publish calibration status
+        pass
+
+    def check_stationary(self):
+        """
+        Check if the robot is in a stationary state
+        """
+        # TODO: Determine if the robot is stationary based on joint encoders and IMU
+        # Use velocity thresholds to detect static positions
+        pass
+
+    def collect_calibration_data(self):
+        """
+        Collect data for calibration
+        """
+        # TODO: Collect data for a specified number of samples
+        # Only collect when robot is stationary
+        pass
+
+    def process_imu_calibration(self):
+        """
+        Process IMU calibration
+        """
+        # TODO: Compute bias and scale factors for IMU
+        # Use known gravity for accelerometer calibration
+        # Use known magnetic field for magnetometer calibration
+        pass
+
+    def process_encoder_calibration(self):
+        """
+        Process encoder calibration
+        """
+        # TODO: Compute encoder offsets using known positions
+        # Use forward kinematics to determine expected positions
+        # Compare with actual encoder readings
+        pass
+
+    def process_sensor_alignment(self):
+        """
+        Process spatial alignment between sensors
+        """
+        # TODO: Compute spatial relationships between sensors
+        # Use known poses to determine relative positions and orientations
+        pass
+
+    def save_calibration_results(self):
+        """
+        Save calibration results to file
+        """
+        # TODO: Save calibration parameters to a configuration file
+        # Format should be readable by robot's main control software
+        pass
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = CalibrationRoutine()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Detailed Specifications
+
+1. **IMU Calibration**:
+    - Collect data with the robot in known orientations (e.g., sitting flat on ground)
+    - Calculate accelerometer bias by measuring gravity vector in static positions
+    - Calculate gyroscope bias by measuring output during static periods
+    - Determine scale factors and alignment matrices for all axes
+
+2. **Encoder Calibration**:
+    - Use known mechanical positions to determine encoder offsets
+    - Compare forward kinematic predictions with actual measurements
+    - Calibrate joint zero positions and any systematic errors
+
+3. **Magnetometer Calibration** (if available):
+    - Collect magnetic field measurements at multiple orientations
+    - Compute hard iron and soft iron distortion parameters
+    - Create a correction matrix to transform raw readings to calibrated values
+
+4. **Force/Torque Sensor Calibration** (if available):
+    - Determine zero offsets when no load is applied
+    - Apply known forces and measure sensor response
+    - Create a calibration matrix for force and torque measurements
+
+5. **Spatial Alignment Calibration**:
+   - Determine relative positions and orientations of sensors
+   - Use known geometric relationships to calibrate spatial transforms
+   - Create TF transforms between sensor frames
+
+## Test Cases for Validation
+
+1. **Bias Determination**:
+   - With robot in static position, calibrated readings should show expected values
+   - Accelerometer should show gravity vector (~9.81 m/s²) in correct direction
+   - Gyroscope should show near-zero angular velocity when static
+
+2. **Scale Factor Accuracy**:
+   - When robot is rotated to different known angles, readings should match
+   - Applied forces should result in proportional sensor readings
+
+3. **Cross-Sensor Consistency**:
+   - After calibration, measurements from different sensors should be consistent
+   - Forward kinematic predictions should match with sensor readings
+
+4. **Repeatability**:
+   - Multiple calibration runs should produce similar results
+   - Parameters should be stable across different environmental conditions
+
+## Hints and Common Pitfalls
+
+<Admonition type="tip" title="IMU Accelerometer Calibration">
+For accelerometer calibration, the sensor should be placed in multiple known orientations (typically 6 faces of a cube) to determine bias and scale factors. The expected acceleration magnitude should be 9.81 m/s² in each static measurement.
+</Admonition>
+
+<Admonition type="danger" title="Magnetometer Interference">
+Magnetometers are sensitive to magnetic interference from nearby metal objects, motors, and electronics. Ensure the calibration environment is magnetically clean and repeat measurements to verify consistency.
+</Admonition>
+
+- Use consistent, high-quality reference positions for calibration
+- Ensure adequate sampling time to get stable measurements
+- Implement validation steps to verify calibration quality
+- Store calibration parameters in a format that can be loaded by the main robot software
+- Include error checking and warnings for poor calibration results
+
+## Expected Output/Visualization
+
+1. **Terminal Output**:
+   - Calibration status messages during each step
+   - Final calibration parameters and quality metrics
+
+2. **Calibration File**:
+   - A file containing calibration parameters that can be loaded by the robot software
+   - Human-readable format with parameter descriptions
+
+3. **Validation Reports**:
+   - Before/after comparison of sensor readings
+   - Statistical measures of calibration quality
+
+## Solution Template
+
+```python
+#!/usr/bin/env python3
+"""
+Multi-Sensor Calibration Routine for Humanoid Robotics - SOLUTION
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu, JointState, MagneticField
+from geometry_msgs.msg import Vector3Stamped, WrenchStamped
+from std_msgs.msg import String
+import numpy as np
+import statistics
+from collections import deque
+import tf_transformations
+import yaml
+import os
+
+class CalibrationRoutine(Node):
+    def __init__(self):
+        super().__init__('calibration_routine')
+        
+        # Declare and get parameters
+        self.declare_parameter('imu_topic', 'imu/data')
+        self.declare_parameter('joint_topic', 'joint_states')
+        self.declare_parameter('magnetic_topic', 'imu/mag')
+        self.declare_parameter('wrench_topic', 'ft_sensor')
+        self.declare_parameter('calibration_samples', 500)
+        self.declare_parameter('stationary_threshold', 0.05)
+        self.declare_parameter('static_duration', 3.0)
+        self.declare_parameter('gravity_magnitude', 9.81)
+        
+        # Get parameter values
+        self.imu_topic = self.get_parameter('imu_topic').value
+        self.joint_topic = self.get_parameter('joint_topic').value
+        self.magnetic_topic = self.get_parameter('magnetic_topic').value
+        self.wrench_topic = self.get_parameter('wrench_topic').value
+        self.calibration_samples = self.get_parameter('calibration_samples').value
+        self.stationary_threshold = self.get_parameter('stationary_threshold').value
+        self.static_duration = self.get_parameter('static_duration').value
+        self.gravity_magnitude = self.get_parameter('gravity_magnitude').value
+        
+        # Create subscriptions
+        self.imu_sub = self.create_subscription(Imu, self.imu_topic, self.imu_callback, 10)
+        self.joint_sub = self.create_subscription(JointState, self.joint_topic, self.joint_callback, 10)
+        
+        # Optional subscriptions
+        try:
+            self.mag_sub = self.create_subscription(MagneticField, self.magnetic_topic, self.mag_callback, 10)
+        except:
+            self.get_logger().info('Magnetic field topic not available')
+        
+        try:
+            self.wrench_sub = self.create_subscription(WrenchStamped, self.wrench_topic, self.wrench_callback, 10)
+        except:
+            self.get_logger().info('Wrench topic not available')
+        
+        # Create publishers
+        self.status_pub = self.create_publisher(String, 'calibration_status', 10)
+        
+        # Data buffers for calibration
+        self.imu_buffer = deque(maxlen=self.calibration_samples)
+        self.joint_buffer = deque(maxlen=self.calibration_samples)
+        self.mag_buffer = deque(maxlen=self.calibration_samples)
+        self.wrench_buffer = deque(maxlen=self.calibration_samples)
+        
+        # Previous joint state for velocity calculation
+        self.prev_joint_state = None
+        self.prev_time = None
+        
+        # Calibration results
+        self.calibration_results = {
+            'imu_bias': np.zeros(3),
+            'imu_scale': np.ones(3),
+            'encoder_offsets': {},
+            'mag_bias': np.zeros(3),
+            'mag_scale': np.ones(3),
+            'sensor_alignments': {}
+        }
+        
+        # Calibration state
+        self.calibration_step = 0  # 0=not started, 1=collecting, 2=processing, 3=complete
+        self.static_start_time = None
+        self.is_static = False
+        self.samples_collected = 0
+        
+        # Start the calibration process
+        self.get_logger().info('Starting calibration in 5 seconds. Ensure the robot is in a static position.')
+        self.calibration_timer = self.create_timer(5.0, self.start_calibration)
+        
+        self.get_logger().info('Multi-Sensor Calibration Routine Started')
+
+    def start_calibration(self):
+        """
+        Start the calibration process
+        """
+        self.calibration_step = 1
+        self.get_logger().info('Calibration started. Ensure robot remains static.')
+        self.status_pub.publish(String(data='CALIBRATION_STARTED'))
+        
+        # Use timer for calibration checks
+        self.timer = self.create_timer(0.1, self.calibration_timer_callback)
+
+    def imu_callback(self, msg):
+        """
+        Process IMU data for calibration
+        """
+        if self.calibration_step == 1 and self.is_static:
+            # Store IMU data only during static periods
+            imu_data = {
+                'linear_acceleration': [
+                    msg.linear_acceleration.x,
+                    msg.linear_acceleration.y,
+                    msg.linear_acceleration.z
+                ],
+                'angular_velocity': [
+                    msg.angular_velocity.x,
+                    msg.angular_velocity.y,
+                    msg.angular_velocity.z
+                ],
+                'orientation': [
+                    msg.orientation.x,
+                    msg.orientation.y,
+                    msg.orientation.z,
+                    msg.orientation.w
+                ],
+                'timestamp': self.get_clock().now().nanoseconds / 1e9
+            }
+            self.imu_buffer.append(imu_data)
+
+    def joint_callback(self, msg):
+        """
+        Process joint encoder data for calibration
+        """
+        current_time = self.get_clock().now().nanoseconds / 1e9
+        self.joint_buffer.append({
+            'positions': dict(zip(msg.name, msg.position)),
+            'timestamp': current_time
+        })
+        
+        # Check if robot is stationary
+        self.check_stationary(msg, current_time)
+
+    def mag_callback(self, msg):
+        """
+        Process magnetometer data for calibration
+        """
+        if self.calibration_step == 1 and self.is_static:
+            mag_data = [
+                msg.magnetic_field.x,
+                msg.magnetic_field.y,
+                msg.magnetic_field.z
+            ]
+            self.mag_buffer.append(mag_data)
+
+    def wrench_callback(self, msg):
+        """
+        Process force/torque sensor data for calibration
+        """
+        if self.calibration_step == 1 and self.is_static:
+            wrench_data = [
+                msg.wrench.force.x,
+                msg.wrench.force.y,
+                msg.wrench.force.z,
+                msg.wrench.torque.x,
+                msg.wrench.torque.y,
+                msg.wrench.torque.z
+            ]
+            self.wrench_buffer.append(wrench_data)
+
+    def check_stationary(self, msg, current_time):
+        """
+        Check if the robot is in a stationary state
+        """
+        if self.prev_joint_state is not None:
+            # Calculate joint velocities
+            dt = current_time - self.prev_time
+            if dt > 0:
+                joint_velocities = {}
+                for i, name in enumerate(msg.name):
+                    if name in self.prev_joint_state:
+                        vel = (msg.position[i] - self.prev_joint_state[name]) / dt
+                        joint_velocities[name] = vel
+                
+                # Check if all velocities are below threshold
+                max_vel = max(abs(v) for v in joint_velocities.values()) if joint_velocities else float('inf')
+                
+                if max_vel < self.stationary_threshold:
+                    if self.static_start_time is None:
+                        self.static_start_time = current_time
+                        self.is_static = True
+                    elif (current_time - self.static_start_time) > self.static_duration:
+                        self.is_static = True
+                else:
+                    self.static_start_time = None
+                    self.is_static = False
+            else:
+                self.is_static = False
+        else:
+            self.static_start_time = current_time
+        
+        self.prev_joint_state = dict(zip(msg.name, msg.position))
+        self.prev_time = current_time
+
+    def calibration_timer_callback(self):
+        """
+        Timer callback for calibration state management
+        """
+        if self.calibration_step == 1:
+            if self.is_static and len(self.imu_buffer) > 0:
+                # Continue collecting data
+                self.samples_collected += 1
+                status_msg = f'Collecting calibration data... ({self.samples_collected}/{self.calibration_samples})'
+                self.status_pub.publish(String(data=status_msg))
+                
+                if self.samples_collected >= self.calibration_samples:
+                    # Move to processing step
+                    self.calibration_step = 2
+                    self.get_logger().info('Data collection complete. Processing calibration...')
+                    self.status_pub.publish(String(data='PROCESSING_CALIBRATION'))
+                    
+                    # Process the collected data
+                    self.process_calibration()
+            else:
+                # Robot is not static, pause collection
+                self.status_pub.publish(String(data='Robot not static, waiting...'))
+        elif self.calibration_step == 2:
+            # Calibration already processed
+            pass
+
+    def process_calibration(self):
+        """
+        Process collected data to compute calibration parameters
+        """
+        # Process IMU calibration
+        self.process_imu_calibration()
+        
+        # Process encoder calibration
+        self.process_encoder_calibration()
+        
+        # Process magnetometer calibration if data available
+        if len(self.mag_buffer) > 10:  # Need enough samples
+            self.process_magnetometer_calibration()
+        
+        # Process wrench sensor calibration if data available
+        if len(self.wrench_buffer) > 10:
+            self.process_wrench_calibration()
+        
+        # Save results
+        self.save_calibration_results()
+        
+        # Update state
+        self.calibration_step = 3
+        self.get_logger().info('Calibration complete!')
+        self.status_pub.publish(String(data='CALIBRATION_COMPLETE'))
+
+    def process_imu_calibration(self):
+        """
+        Process IMU calibration to compute bias and scale factors
+        """
+        if len(self.imu_buffer) == 0:
+            self.get_logger().warn('No IMU data collected for calibration')
+            return
+        
+        # Extract accelerometer data
+        accel_data = []
+        gyro_data = []
+        
+        for sample in self.imu_buffer:
+            accel_data.append(sample['linear_acceleration'])
+            gyro_data.append(sample['angular_velocity'])
+        
+        # Convert to numpy arrays
+        accel_np = np.array(accel_data)
+        gyro_np = np.array(gyro_data)
+        
+        # Calculate accelerometer bias (assuming robot is static with only gravity)
+        # The average should equal gravity (9.81 m/s² in the appropriate axis)
+        accel_bias = np.mean(accel_np, axis=0)
+        
+        # Find which axis primarily measures gravity (largest absolute value)
+        gravity_axis = np.argmax(np.abs(accel_bias))
+        gravity_sign = np.sign(accel_bias[gravity_axis])
+        
+        # Calculate scale factor based on known gravity
+        measured_gravity = abs(accel_bias[gravity_axis])
+        scale_factor = self.gravity_magnitude / measured_gravity
+        
+        # Store results
+        self.calibration_results['imu_bias'] = accel_bias
+        self.calibration_results['imu_scale'] = np.array([scale_factor, scale_factor, scale_factor])
+        
+        self.get_logger().info(f'IMU calibration: Bias={accel_bias}, Scale={scale_factor:.3f}')
+        
+        # Calculate gyroscope bias (should be near zero when static)
+        gyro_bias = np.mean(gyro_np, axis=0)
+        self.calibration_results['gyro_bias'] = gyro_bias
+        self.get_logger().info(f'Gyro calibration: Bias={gyro_bias}')
+
+    def process_encoder_calibration(self):
+        """
+        Process encoder calibration to compute offsets
+        """
+        if len(self.joint_buffer) == 0:
+            self.get_logger().warn('No joint data collected for calibration')
+            return
+        
+        # For this example, we'll compute average positions during static state
+        # In practice, you'd compare to known kinematic positions
+        
+        # Get the first static joint position as reference
+        if len(self.joint_buffer) > 0:
+            ref_positions = self.joint_buffer[0]['positions']
+            self.calibration_results['encoder_offsets'] = {
+                name: -pos for name, pos in ref_positions.items()
+            }
+        
+        self.get_logger().info(f'Encoder offsets computed for {len(self.calibration_results["encoder_offsets"])} joints')
+
+    def process_magnetometer_calibration(self):
+        """
+        Process magnetometer calibration
+        """
+        if len(self.mag_buffer) == 0:
+            self.get_logger().warn('No magnetometer data collected for calibration')
+            return
+        
+        # Convert to numpy array
+        mag_np = np.array(self.mag_buffer)
+        
+        # Calculate bias (center of ellipsoid)
+        mag_bias = np.mean(mag_np, axis=0)
+        
+        # Calculate scale factors (simple approach - assume spherical calibration)
+        # More complex calibration would compute an ellipsoid
+        mag_centered = mag_np - mag_bias
+        mag_magnitudes = np.linalg.norm(mag_centered, axis=1)
+        avg_magnitude = np.mean(mag_magnitudes)
+        
+        # Calculate scale factors to normalize to average magnitude
+        if avg_magnitude > 0:
+            mag_scale = np.full(3, self.gravity_magnitude / avg_magnitude)  # Using gravity as reference
+        else:
+            mag_scale = np.ones(3)
+        
+        # Store results
+        self.calibration_results['mag_bias'] = mag_bias
+        self.calibration_results['mag_scale'] = mag_scale
+        
+        self.get_logger().info(f'Magnetometer calibration: Bias={mag_bias}, Scale={mag_scale}')
+
+    def process_wrench_calibration(self):
+        """
+        Process wrench sensor calibration (assuming zero load during calibration)
+        """
+        if len(self.wrench_buffer) == 0:
+            self.get_logger().warn('No wrench data collected for calibration')
+            return
+        
+        # Convert to numpy array
+        wrench_np = np.array(self.wrench_buffer)
+        
+        # Calculate bias (should be zero with no load)
+        wrench_bias = np.mean(wrench_np, axis=0)
+        
+        # Store results
+        self.calibration_results['wrench_bias'] = wrench_bias
+        
+        self.get_logger().info(f'Wrench calibration: Bias={wrench_bias}')
+
+    def save_calibration_results(self):
+        """
+        Save calibration results to file
+        """
+        # Create calibration data structure
+        cal_data = {
+            'imu_bias': self.calibration_results['imu_bias'].tolist(),
+            'imu_scale': self.calibration_results['imu_scale'].tolist(),
+            'gyro_bias': self.calibration_results.get('gyro_bias', [0, 0, 0]).tolist(),
+            'encoder_offsets': {
+                name: float(offset) 
+                for name, offset in self.calibration_results['encoder_offsets'].items()
+            },
+            'mag_bias': self.calibration_results['mag_bias'].tolist(),
+            'mag_scale': self.calibration_results['mag_scale'].tolist(),
+            'wrench_bias': self.calibration_results.get('wrench_bias', [0, 0, 0, 0, 0, 0]).tolist(),
+            'calibration_timestamp': self.get_clock().now().nanoseconds / 1e9
+        }
+        
+        # Save to YAML file
+        cal_file_path = os.path.join(os.path.expanduser('~'), 'robot_calibration.yaml')
+        with open(cal_file_path, 'w') as f:
+            yaml.dump(cal_data, f, default_flow_style=False)
+        
+        self.get_logger().info(f'Calibration results saved to: {cal_file_path}')
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = CalibrationRoutine()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Dependencies and Setup Instructions
+
+1. **Required Packages**:
+    ```bash
+    pip3 install numpy pyyaml transforms3d
+    sudo apt install ros-humble-sensor-msgs ros-humble-geometry-msgs
+    ```
+
+2. **Package.xml additions**:
+    ```xml
+    <depend>sensor_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>std_msgs</depend>
+    <depend>rclpy</depend>
+    ```
+
+3. **Setup.py additions**:
+    ```python
+    entry_points={
+        'console_scripts': [
+            'calibration_routine = sensor_calibration.calibration_routine:main',
+        ],
+    },
+    ```
+
+## Running the Exercise
+
+1. Build your package: `colcon build --packages-select sensor_calibration`
+2. Source your workspace: `source install/setup.bash`
+3. Place the robot in a stable, static position
+4. Run the calibration: `ros2 run sensor_calibration calibration_routine`
+5. The node will wait 5 seconds, then begin collecting data
+6. Keep the robot static during the collection phase
+7. After calibration completes, results will be saved to a YAML file
+
+This exercise provides essential knowledge for ensuring accurate sensor measurements in humanoid robots, which is critical for stable control and reliable operation.

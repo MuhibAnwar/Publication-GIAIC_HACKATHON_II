@@ -1,0 +1,22 @@
+{
+  "id": "intro",
+  "title": "Introduction to Physical AI & Humanoid Robotics",
+  "description": "Welcome to the Future of AI",
+  "source": "@site/docs/intro.mdx",
+  "sourceDirName": ".",
+  "slug": "/intro",
+  "permalink": "/textbook/docs/intro",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/spec-ai/textbook/tree/main/docs/intro.mdx",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Introduction to Physical AI & Humanoid Robotics"
+  },
+  "sidebar": "textbookSidebar",
+  "next": {
+    "title": "Course Overview",
+    "permalink": "/textbook/docs/overview"
+  }
+}

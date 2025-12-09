@@ -1,0 +1,550 @@
+---
+title: "Exercise 3: Sensor Fault Detection"
+description: "Implement a sensor fault detection system for humanoid robotics applications"
+---
+
+import { Admonition } from '@site/src/components/Admonition';
+
+# Exercise 3: Sensor Fault Detection
+
+## Learning Objectives
+
+- Understand the importance of sensor reliability in humanoid robotics
+- Implement statistical methods for detecting sensor faults
+- Design a fault detection system that can identify various types of sensor failures
+- Integrate fault detection with real-time ROS2 systems
+
+## Problem Statement
+
+In humanoid robotics, sensor failures can have catastrophic consequences, especially during dynamic motions like walking or manipulation. A sensor fault detection system is critical to identify when sensors are producing unreliable data, allowing the robot to take appropriate action (safe-stop, switch to backup sensors, etc.).
+
+In this exercise, you will implement a statistical-based sensor fault detection system that monitors IMU and encoder data streams, identifies outliers and systematic errors, and reports potential sensor faults.
+
+## Starter Code Template
+
+First, create a new ROS2 package for this exercise:
+
+```bash
+# Create the package
+ros2 pkg create --build-type ament_python sensor_fault_detection
+cd sensor_fault_detection/sensor_fault_detection
+
+# Create the main Python file
+touch fault_detection_node.py
+```
+
+Here's your starter code for `fault_detection_node.py`:
+
+```python
+#!/usr/bin/env python3
+"""
+Sensor Fault Detection for Humanoid Robotics
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu, JointState
+from std_msgs.msg import Bool, Float64MultiArray
+from builtin_interfaces.msg import Time
+import numpy as np
+from collections import deque
+import statistics
+
+class FaultDetectionNode(Node):
+    def __init__(self):
+        super().__init__('fault_detection_node')
+        
+        # Declare and get parameters
+        self.declare_parameter('imu_topic', 'imu/data')
+        self.declare_parameter('joint_topic', 'joint_states')
+        self.declare_parameter('joint_name', 'base_joint')
+        self.declare_parameter('window_size', 50)
+        self.declare_parameter('publish_rate', 10)
+        self.declare_parameter('imu_position_threshold', 0.5)
+        self.declare_parameter('imu_velocity_threshold', 0.2)
+        self.declare_parameter('encoder_threshold', 0.3)
+        self.declare_parameter('consistency_threshold', 0.4)
+        
+        self.imu_topic = self.get_parameter('imu_topic').value
+        self.joint_topic = self.get_parameter('joint_topic').value
+        self.joint_name = self.get_parameter('joint_name').value
+        
+        # Create subscriptions
+        self.imu_sub = self.create_subscription(
+            Imu, 
+            self.imu_topic, 
+            self.imu_callback, 
+            10
+        )
+        self.joint_sub = self.create_subscription(
+            JointState, 
+            self.joint_topic, 
+            self.joint_callback, 
+            10
+        )
+        
+        # Create publishers
+        self.fault_status_pub = self.create_publisher(Bool, 'sensor_fault_status', 10)
+        self.fault_details_pub = self.create_publisher(Float64MultiArray, 'sensor_fault_details', 10)
+        
+        # Data buffers for statistical analysis
+        self.imu_buffer = deque(maxlen=self.get_parameter('window_size').value)
+        self.encoder_buffer = deque(maxlen=self.get_parameter('window_size').value)
+        
+        # Initialize statistics
+        self.imu_stats = {'mean': 0.0, 'std': 0.0, 'min': float('inf'), 'max': float('-inf')}
+        self.encoder_stats = {'mean': 0.0, 'std': 0.0, 'min': float('inf'), 'max': float('-inf')}
+        
+        # Timestamps for velocity calculation
+        self.prev_joint_pos = None
+        self.prev_joint_time = None
+        
+        # Fault detection flags
+        self.imu_fault = False
+        self.encoder_fault = False
+        self.consistency_fault = False
+        
+        # Timer for periodic analysis
+        publish_period = 1.0 / self.get_parameter('publish_rate').value
+        self.timer = self.create_timer(publish_period, self.analyze_sensors)
+        
+        self.get_logger().info('Fault Detection Node Started')
+
+    def imu_callback(self, msg):
+        """
+        Process incoming IMU data and add to buffer
+        """
+        # Extract relevant data from IMU message
+        # TODO: Extract orientation, angular velocity, and linear acceleration
+        # TODO: Add data to the IMU buffer
+        pass
+
+    def joint_callback(self, msg):
+        """
+        Process incoming joint encoder data and add to buffer
+        """
+        # Find the target joint
+        try:
+            idx = msg.name.index(self.joint_name)
+            position = msg.position[idx]
+            # TODO: Calculate velocity if possible
+            # TODO: Add data to the encoder buffer
+        except ValueError:
+            self.get_logger().warn(f'Joint {self.joint_name} not found in joint states')
+
+    def analyze_sensors(self):
+        """
+        Perform statistical analysis to detect sensor faults
+        """
+        # TODO: Update statistics for both sensors
+        # TODO: Check for outliers using statistical methods
+        # TODO: Check for consistency between sensors
+        # TODO: Update fault flags
+        # TODO: Publish fault status and details
+        pass
+
+    def check_imu_fault(self):
+        """
+        Check if IMU is producing faulty data
+        """
+        # TODO: Implement statistical tests for IMU data
+        # Consider: outliers, variance, rate of change, etc.
+        pass
+
+    def check_encoder_fault(self):
+        """
+        Check if encoder is producing faulty data
+        """
+        # TODO: Implement statistical tests for encoder data
+        # Consider: outliers, variance, rate of change, etc.
+        pass
+
+    def check_consistency(self):
+        """
+        Check consistency between IMU and encoder readings
+        """
+        # TODO: Compare sensor readings for consistency
+        # Consider: position correlation, velocity correlation, etc.
+        pass
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = FaultDetectionNode()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Detailed Specifications
+
+1. **Statistical Analysis**:
+    - Implement a sliding window approach to maintain recent sensor values
+    - Calculate running statistics (mean, standard deviation) for each sensor
+    - Implement outlier detection using statistical methods (e.g., z-score, IQR)
+
+2. **Multi-Sensor Consistency Check**:
+    - Compare readings from different sensors that should be related
+    - For example, check if encoder-derived velocity matches IMU readings
+    - Implement time synchronization between different sensor streams
+
+3. **Fault Classification**:
+    - Distinguish between different types of faults (noise, bias, drift, complete failure)
+    - Implement appropriate detection algorithms for each fault type
+    - Provide detailed fault information in published messages
+
+4. **Real-time Performance**:
+    - Ensure the algorithm runs efficiently in real-time
+    - Optimize for the specified publish rate
+    - Minimize memory usage with fixed-size buffers
+
+## Test Cases for Validation
+
+1. **Normal Operation**:
+    - With clean sensor data, the system should report no faults
+    - Statistical values should be stable and reasonable
+
+2. **Simulated Faults**:
+    - Inject step changes, noise, or bias into sensor data streams
+    - Verify that the system correctly identifies the fault type and severity
+    - Test with different fault magnitudes to understand detection thresholds
+
+3. **Consistency Failure**:
+    - Simulate scenarios where IMU and encoder readings become inconsistent
+    - Verify that the consistency check detects these issues
+
+4. **Response Time**:
+    - Measure how quickly the system detects various types of faults
+    - Ensure the response time is appropriate for safety-critical applications
+
+## Hints and Common Pitfalls
+
+<Admonition type="tip" title="Statistical Methods for Outlier Detection">
+Consider using z-score (number of standard deviations from the mean) or interquartile range (IQR) to detect outliers. For z-score, values with |z| > 3 are typically considered outliers. For IQR, values outside Q1-1.5*IQR and Q3+1.5*IQR are outliers.
+</Admonition>
+
+<Admonition type="danger" title="Timing Issues">
+Be careful with time synchronization between different sensor streams. Use appropriate timestamps and consider interpolation when comparing data that arrives at different rates.
+</Admonition>
+
+- Use appropriate statistical methods for the type of sensor data (some sensors may not follow normal distributions)
+- Consider the physical limitations of the robot when setting thresholds (e.g., maximum possible velocity)
+- Implement hysteresis to prevent fault status flickering
+- Use fixed-size deques to manage memory efficiently
+- Test with real-world data as well as simulated faults
+
+## Expected Output/Visualization
+
+1. **Terminal Output**:
+    - Node starts successfully with appropriate logging
+    - Fault detection events logged when detected
+
+2. **ROS2 Topics**:
+    - `sensor_fault_status`: Boolean indicating if any fault was detected
+    - `sensor_fault_details`: Detailed information about fault types and severities
+
+3. **Performance Metrics**:
+    - Low computational overhead
+    - Fast response time to actual faults
+    - Low false positive rate during normal operation
+
+## Solution Template
+
+```python
+#!/usr/bin/env python3
+"""
+Sensor Fault Detection for Humanoid Robotics - SOLUTION
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu, JointState
+from std_msgs.msg import Bool, Float64MultiArray
+from builtin_interfaces.msg import Time
+import numpy as np
+from collections import deque
+import statistics
+
+class FaultDetectionNode(Node):
+    def __init__(self):
+        super().__init__('fault_detection_node')
+        
+        # Declare and get parameters
+        self.declare_parameter('imu_topic', 'imu/data')
+        self.declare_parameter('joint_topic', 'joint_states')
+        self.declare_parameter('joint_name', 'base_joint')
+        self.declare_parameter('window_size', 50)
+        self.declare_parameter('publish_rate', 10)
+        self.declare_parameter('imu_position_threshold', 0.5)
+        self.declare_parameter('imu_velocity_threshold', 0.2)
+        self.declare_parameter('encoder_threshold', 0.3)
+        self.declare_parameter('consistency_threshold', 0.4)
+        self.declare_parameter('z_score_threshold', 3.0)
+        
+        self.imu_topic = self.get_parameter('imu_topic').value
+        self.joint_topic = self.get_parameter('joint_topic').value
+        self.joint_name = self.get_parameter('joint_name').value
+        self.window_size = self.get_parameter('window_size').value
+        self.z_score_threshold = self.get_parameter('z_score_threshold').value
+        
+        # Create subscriptions
+        self.imu_sub = self.create_subscription(
+            Imu, 
+            self.imu_topic, 
+            self.imu_callback, 
+            10
+        )
+        self.joint_sub = self.create_subscription(
+            JointState, 
+            self.joint_topic, 
+            self.joint_callback, 
+            10
+        )
+        
+        # Create publishers
+        self.fault_status_pub = self.create_publisher(Bool, 'sensor_fault_status', 10)
+        self.fault_details_pub = self.create_publisher(Float64MultiArray, 'sensor_fault_details', 10)
+        
+        # Data buffers for statistical analysis
+        self.imu_buffer = deque(maxlen=self.window_size)
+        self.encoder_buffer = deque(maxlen=self.window_size)
+        self.imu_time_buffer = deque(maxlen=self.window_size)
+        self.encoder_time_buffer = deque(maxlen=self.window_size)
+        
+        # Initialize statistics
+        self.imu_stats = {'mean': 0.0, 'std': 0.0, 'min': float('inf'), 'max': float('-inf')}
+        self.encoder_stats = {'mean': 0.0, 'std': 0.0, 'min': float('inf'), 'max': float('-inf')}
+        
+        # Timestamps for velocity calculation
+        self.prev_joint_pos = None
+        self.prev_joint_time = None
+        
+        # Fault detection flags
+        self.imu_fault = False
+        self.encoder_fault = False
+        self.consistency_fault = False
+        
+        # Fault severities (0.0 to 1.0)
+        self.imu_fault_severity = 0.0
+        self.encoder_fault_severity = 0.0
+        self.consistency_fault_severity = 0.0
+        
+        # Timer for periodic analysis
+        publish_period = 1.0 / self.get_parameter('publish_rate').value
+        self.timer = self.create_timer(publish_period, self.analyze_sensors)
+        
+        self.get_logger().info('Fault Detection Node Started')
+
+    def imu_callback(self, msg):
+        """
+        Process incoming IMU data and add to buffer
+        """
+        # Extract orientation data (as an example, using z-component of orientation)
+        orientation_data = msg.orientation.z
+        
+        # Add to buffer with timestamp
+        current_time = self.get_clock().now().nanoseconds / 1e9
+        self.imu_buffer.append(orientation_data)
+        self.imu_time_buffer.append(current_time)
+
+    def joint_callback(self, msg):
+        """
+        Process incoming joint encoder data and add to buffer
+        """
+        # Find the target joint
+        try:
+            idx = msg.name.index(self.joint_name)
+            position = msg.position[idx]
+            
+            # Add to buffer with timestamp
+            current_time = self.get_clock().now().nanoseconds / 1e9
+            self.encoder_buffer.append(position)
+            self.encoder_time_buffer.append(current_time)
+            
+        except ValueError:
+            self.get_logger().warn(f'Joint {self.joint_name} not found in joint states')
+
+    def update_statistics(self, data_buffer, stats_dict):
+        """
+        Update statistics for a given data buffer
+        """
+        if len(data_buffer) > 1:
+            data_list = list(data_buffer)
+            stats_dict['mean'] = statistics.mean(data_list)
+            stats_dict['std'] = statistics.stdev(data_list) if len(data_list) > 1 else 0.0
+            stats_dict['min'] = min(data_list)
+            stats_dict['max'] = max(data_list)
+
+    def detect_outliers(self, data_buffer, threshold):
+        """
+        Detect outliers using z-score method
+        """
+        if len(data_buffer) < 3:  # Need at least 3 points for z-score
+            return False, 0.0
+        
+        data_list = list(data_buffer)
+        data_np = np.array(data_list)
+        
+        # Calculate z-scores
+        mean = np.mean(data_np)
+        std = np.std(data_np)
+        
+        if std == 0:
+            return False, 0.0
+            
+        z_scores = np.abs((data_np - mean) / std)
+        max_z_score = np.max(z_scores)
+        
+        # Determine if there are any outliers
+        outlier_count = np.sum(z_scores > threshold)
+        has_outliers = outlier_count > 0
+        
+        # Calculate severity as the maximum z-score normalized by threshold
+        severity = max_z_score / threshold if max_z_score > threshold else 0.0
+        
+        return has_outliers, min(severity, 1.0)  # Cap at 1.0
+
+    def analyze_sensors(self):
+        """
+        Perform statistical analysis to detect sensor faults
+        """
+        # Update statistics for both sensors
+        if len(self.imu_buffer) > 1:
+            self.update_statistics(self.imu_buffer, self.imu_stats)
+        
+        if len(self.encoder_buffer) > 1:
+            self.update_statistics(self.encoder_buffer, self.encoder_stats)
+        
+        # Check for IMU faults
+        if len(self.imu_buffer) > 1:
+            self.imu_fault, self.imu_fault_severity = self.detect_outliers(
+                self.imu_buffer, 
+                self.z_score_threshold
+            )
+        
+        # Check for encoder faults
+        if len(self.encoder_buffer) > 1:
+            self.encoder_fault, self.encoder_fault_severity = self.detect_outliers(
+                self.encoder_buffer, 
+                self.z_score_threshold
+            )
+        
+        # Check for consistency between sensors (if both have data)
+        if len(self.imu_buffer) > 1 and len(self.encoder_buffer) > 1:
+            self.check_consistency()
+        else:
+            self.consistency_fault = False
+            self.consistency_fault_severity = 0.0
+        
+        # Publish fault status
+        fault_msg = Bool()
+        fault_msg.data = self.imu_fault or self.encoder_fault or self.consistency_fault
+        self.fault_status_pub.publish(fault_msg)
+        
+        # Publish detailed fault information
+        details_msg = Float64MultiArray()
+        details_msg.data = [
+            float(self.imu_fault),
+            float(self.encoder_fault), 
+            float(self.consistency_fault),
+            self.imu_fault_severity,
+            self.encoder_fault_severity,
+            self.consistency_fault_severity
+        ]
+        self.fault_details_pub.publish(details_msg)
+        
+        # Log fault status if any fault is detected
+        if fault_msg.data:
+            self.get_logger().warn(
+                f'Sensor Fault Detected: IMU={self.imu_fault}({self.imu_fault_severity:.2f}), '
+                f'Encoder={self.encoder_fault}({self.encoder_fault_severity:.2f}), '
+                f'Consistency={self.consistency_fault}({self.consistency_fault_severity:.2f})'
+            )
+
+    def check_consistency(self):
+        """
+        Check consistency between IMU and encoder readings
+        """
+        # This is a simplified approach - in practice, you might need more sophisticated
+        # models that account for the relationship between different sensor types
+        
+        if len(self.imu_buffer) < 2 or len(self.encoder_buffer) < 2:
+            return
+        
+        # Get most recent values
+        imu_recent = list(self.imu_buffer)[-10:]  # Last 10 values
+        encoder_recent = list(self.encoder_buffer)[-10:]  # Last 10 values
+        
+        # Calculate recent trends
+        imu_trend = np.polyfit(range(len(imu_recent)), imu_recent, 1)[0] if len(imu_recent) > 1 else 0.0
+        encoder_trend = np.polyfit(range(len(encoder_recent)), encoder_recent, 1)[0] if len(encoder_recent) > 1 else 0.0
+        
+        # Calculate difference in trends
+        trend_diff = abs(imu_trend - encoder_trend)
+        
+        # Set consistency threshold (adjust based on your specific application)
+        consistency_threshold = self.get_parameter('consistency_threshold').value
+        
+        # Determine if trends are inconsistent
+        self.consistency_fault = trend_diff > consistency_threshold
+        
+        # Calculate severity based on degree of inconsistency
+        self.consistency_fault_severity = min(trend_diff / consistency_threshold, 1.0)
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = FaultDetectionNode()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Dependencies and Setup Instructions
+
+1. **Required Packages**:
+    ```bash
+    pip3 install numpy
+    sudo apt install ros-humble-sensor-msgs
+    ```
+
+2. **Package.xml additions**:
+    ```xml
+    <depend>sensor_msgs</depend>
+    <depend>std_msgs</depend>
+    <depend>rclpy</depend>
+    ```
+
+3. **Setup.py additions**:
+    ```python
+    entry_points={
+        'console_scripts': [
+            'fault_detection_node = sensor_fault_detection.fault_detection_node:main',
+        ],
+    },
+    ```
+
+## Running the Exercise
+
+1. Build your package: `colcon build --packages-select sensor_fault_detection`
+2. Source your workspace: `source install/setup.bash`
+3. In one terminal, run a simulation that provides IMU and joint state data
+4. In another terminal, run: `ros2 run sensor_fault_detection fault_detection_node`
+5. Monitor the fault status topic: `ros2 topic echo /sensor_fault_status`
+6. For detailed information: `ros2 topic echo /sensor_fault_details`
+
+This exercise provides essential skills for building robust humanoid robots that can operate safely even when sensor failures occur, which is critical for real-world applications.

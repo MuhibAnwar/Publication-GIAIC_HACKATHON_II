@@ -1,0 +1,300 @@
+---
+title: "Exercise 1: Basic IMU Data Reading"
+description: "Learn to read and interpret IMU data in ROS2 for humanoid robotics applications"
+---
+
+import { Admonition } from '@site/src/components/Admonition';
+
+# Exercise 1: Basic IMU Data Reading
+
+## Learning Objectives
+
+- Understand IMU sensor data and its representation in ROS2
+- Implement a ROS2 subscriber to read IMU messages
+- Calculate orientation from IMU data
+- Visualize IMU readings
+
+## Problem Statement
+
+In humanoid robotics, Inertial Measurement Units (IMUs) are critical for balance control and state estimation. In this exercise, you will create a ROS2 node that subscribes to IMU data, processes the orientation information, and publishes calculated values.
+
+This exercise introduces you to the `sensor_msgs/Imu` message type and the fundamentals of working with orientation data from IMUs.
+
+## Starter Code Template
+
+Create a new ROS2 package for this exercise:
+
+```bash
+# Create the package
+ros2 pkg create --build-type ament_python imu_orientation_explorer
+cd imu_orientation_explorer/imu_orientation_explorer
+
+# Create the main Python file
+touch imu_orientation_node.py
+```
+
+Here's your starter code for `imu_orientation_node.py`:
+
+```python
+#!/usr/bin/env python3
+"""
+Basic IMU data reading and orientation calculation
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu
+from geometry_msgs.msg import Vector3Stamped
+from tf2_ros import TransformBroadcaster
+import tf_transformations
+import math
+
+class ImuOrientationNode(Node):
+    def __init__(self):
+        super().__init__('imu_orientation_node')
+        
+        # Create a subscription to the IMU topic
+        self.subscription = self.create_subscription(
+            Imu,
+            'imu/data',  # Replace with your IMU topic name
+            self.imu_callback,
+            10)
+        
+        # Create publishers for calculated values
+        self.angle_pub = self.create_publisher(Vector3Stamped, 'imu/euler_angles', 10)
+        self.status_pub = self.create_publisher(Vector3Stamped, 'imu/linear_acceleration', 10)
+        
+        # TF broadcaster for visualization
+        self.tf_broadcaster = TransformBroadcaster(self)
+        
+        self.get_logger().info('IMU Orientation Node Started')
+    
+    def imu_callback(self, msg):
+        """
+        Process incoming IMU data
+        """
+        # TODO: Extract orientation from quaternion
+        # Use tf_transformations to convert quaternion to euler angles
+        # Publish the calculated values
+        # Broadcast TF transform for visualization
+        pass
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ImuOrientationNode()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Detailed Specifications
+
+1. **Complete the `imu_callback` method**:
+    - Extract the orientation quaternion from the IMU message
+    - Convert the quaternion to Euler angles (roll, pitch, yaw)
+    - Publish the Euler angles as a `Vector3Stamped` message on the `imu/euler_angles` topic
+    - Also publish the linear acceleration component separately
+
+2. **Implement TF broadcasting**:
+    - Create a transform from `base_link` to `imu_link` based on the orientation
+    - This will allow visualization in RViz
+
+3. **Add parameter configuration**:
+    - Add a ROS2 parameter for the IMU topic name with a default of `'imu/data'`
+    - Add a parameter for the frame_id with a default of `'imu_link'`
+
+## Test Cases for Validation
+
+1. **Topic Verification**:
+    - Verify that your node subscribes to the correct IMU topic
+    - Check that published topics are being broadcasted
+
+2. **Data Accuracy**:
+    - Verify that orientation values are within expected ranges
+    - Check that Euler angles convert properly from quaternion
+
+3. **TF Verification**:
+    - Use `ros2 run tf2_tools view_frames` to verify TF tree
+    - Check in RViz that the IMU transform is broadcasting correctly
+
+## Hints and Common Pitfalls
+
+<Admonition type="tip" title="Quaternion to Euler Conversion">
+Use the `tf_transformations.euler_from_quaternion` function to convert quaternions to Euler angles. The function expects a list of [x, y, z, w] values from the quaternion.
+</Admonition>
+
+<Admonition type="danger" title="Common Pitfall">
+Remember that IMU data often comes in a different frame than your robot's base frame. You might need to apply a transform to get the orientation relative to the robot's body.
+</Admonition>
+
+- Always check the IMU message format using `ros2 interface show sensor_msgs/msg/Imu`
+- Use `rqt_plot` to visualize the IMU data in real-time
+- Be careful about the frame_id in your publisher messages
+- Handle the case where IMU data might be unreliable or invalid
+
+## Expected Output/Visualization
+
+1. **Terminal Output**:
+    - Node starts successfully
+    - Processed IMU messages logged periodically
+
+2. **RViz Visualization**:
+    - IMU frame shown rotating with the actual sensor
+    - Correct TF transform between robot base and IMU
+
+3. **Topic Values**:
+    - `imu/euler_angles` showing roll, pitch, yaw angles in radians
+    - `imu/linear_acceleration` showing acceleration in m/s²
+
+## Solution Template
+
+```python
+#!/usr/bin/env python3
+"""
+Basic IMU data reading and orientation calculation - SOLUTION
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu
+from geometry_msgs.msg import Vector3Stamped
+from tf2_ros import TransformBroadcaster
+from geometry_msgs.msg import TransformStamped
+import tf_transformations
+import math
+
+class ImuOrientationNode(Node):
+    def __init__(self):
+        super().__init__('imu_orientation_node')
+        
+        # Declare parameters with defaults
+        self.declare_parameter('imu_topic', 'imu/data')
+        self.declare_parameter('frame_id', 'imu_link')
+        
+        # Get parameter values
+        imu_topic = self.get_parameter('imu_topic').value
+        self.frame_id = self.get_parameter('frame_id').value
+        
+        # Create a subscription to the IMU topic
+        self.subscription = self.create_subscription(
+            Imu,
+            imu_topic,
+            self.imu_callback,
+            10)
+        
+        # Create publishers for calculated values
+        self.angle_pub = self.create_publisher(Vector3Stamped, 'imu/euler_angles', 10)
+        self.accel_pub = self.create_publisher(Vector3Stamped, 'imu/linear_acceleration', 10)
+        
+        # TF broadcaster for visualization
+        self.tf_broadcaster = TransformBroadcaster(self)
+        
+        self.get_logger().info(f'IMU Orientation Node Started - Listening to: {imu_topic}')
+
+    def imu_callback(self, msg):
+        """
+        Process incoming IMU data
+        """
+        # Extract quaternion from IMU message
+        orientation_q = msg.orientation
+        quat = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+        
+        # Convert quaternion to Euler angles
+        roll, pitch, yaw = tf_transformations.euler_from_quaternion(quat)
+        
+        # Create and publish Euler angles
+        angles_msg = Vector3Stamped()
+        angles_msg.header.stamp = self.get_clock().now().to_msg()
+        angles_msg.header.frame_id = self.frame_id
+        angles_msg.vector.x = roll
+        angles_msg.vector.y = pitch
+        angles_msg.vector.z = yaw
+        
+        self.angle_pub.publish(angles_msg)
+        
+        # Publish linear acceleration
+        accel_msg = Vector3Stamped()
+        accel_msg.header.stamp = self.get_clock().now().to_msg()
+        accel_msg.header.frame_id = self.frame_id
+        accel_msg.vector.x = msg.linear_acceleration.x
+        accel_msg.vector.y = msg.linear_acceleration.y
+        accel_msg.vector.z = msg.linear_acceleration.z
+        
+        self.accel_pub.publish(accel_msg)
+        
+        # Broadcast TF transform
+        t = TransformStamped()
+        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = 'base_link'  # or appropriate parent frame
+        t.child_frame_id = self.frame_id
+        
+        t.transform.translation.x = 0.0
+        t.transform.translation.y = 0.0
+        t.transform.translation.z = 0.0
+        t.transform.rotation = orientation_q
+        
+        self.tf_broadcaster.sendTransform(t)
+        
+        # Log the orientation periodically
+        if self.get_clock().now().nanoseconds % 1000000000 < 10000000:  # Every second
+            self.get_logger().info(f'Roll: {math.degrees(roll):.2f}°, Pitch: {math.degrees(pitch):.2f}°, Yaw: {math.degrees(yaw):.2f}°')
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ImuOrientationNode()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Dependencies and Setup Instructions
+
+1. **Required Packages**:
+    ```bash
+    sudo apt install ros-humble-tf-transformations
+    sudo apt install ros-humble-tf2-tools
+    pip3 install transforms3d  # Alternative to tf_transformations
+    ```
+
+2. **Package.xml additions**:
+    ```xml
+    <depend>sensor_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>tf2_ros</depend>
+    <depend>rclpy</depend>
+    ```
+
+3. **Setup.py additions**:
+    ```python
+    entry_points={
+        'console_scripts': [
+            'imu_orientation_node = imu_orientation_explorer.imu_orientation_node:main',
+        ],
+    },
+    ```
+
+## Running the Exercise
+
+1. Build your package: `colcon build --packages-select imu_orientation_explorer`
+2. Source your workspace: `source install/setup.bash`
+3. In one terminal, run a simulation or IMU publisher
+4. In another terminal, run: `ros2 run imu_orientation_explorer imu_orientation_node`
+5. Visualize in RViz2 using TF and/or add the published topics
+
+This exercise provides a foundation for working with IMU sensors, which will be critical for more advanced sensor fusion and state estimation tasks.

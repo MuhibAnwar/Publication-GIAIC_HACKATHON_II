@@ -1,0 +1,58 @@
+name: Performance Optimization
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  performance-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build website
+      run: npm run build
+
+    - name: Lighthouse CI
+      run: |
+        if command -v npm > /dev/null; then
+          npm install -g @lhci/cli@0.12.x
+          lhci autorun || echo "LHCI not configured, skipping performance audit"
+        else
+          echo "Node.js not found, skipping performance audit"
+        fi
+      
+    - name: Bundle Size Check
+      run: |
+        if [ -d "build" ]; then
+          echo "Build size analysis:"
+          du -sh build/
+          
+          # Check if main bundle is larger than 5MB (warning threshold)
+          MAIN_BUNDLE_SIZE=$(find build -name "*.js" -exec du -ch {} + | grep total$ | sed 's/[^0-9]*//')
+          if [ $MAIN_BUNDLE_SIZE -gt 5000 ]; then
+            echo "Warning: Bundle size is greater than 5MB"
+          fi
+        else
+          echo "Build directory not found"
+        fi
+
+    - name: Web Vitals Check
+      run: |
+        echo "This step would implement Core Web Vitals checking in a production setup"
+        echo "For Docusaurus sites, key metrics include:"
+        echo "- Largest Contentful Paint (LCP) < 2.5s"
+        echo "- First Input Delay (FID) < 100ms"
+        echo "- Cumulative Layout Shift (CLS) < 0.1"

@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Docusaurus build files
+.docusaurus/
+build/
+
+# Environment variables
+.env*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Temporary folders
+tmp/
+temp/
+
+# IDE files
+.vscode/
+.idea/
+
+# Docusaurus generated types
+docusaurus.config.new.ts
+docusaurus.config.ts
+sidebars.ts
+
+# Other temporary files
+*.new
+*.backup
+
+# Docusaurus cache
+.npm-cache/
+.cache/

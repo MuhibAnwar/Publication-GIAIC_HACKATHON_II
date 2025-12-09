@@ -1,0 +1,58 @@
+{
+  "docusaurus-plugin-content-docs": {
+    "default": {
+      "path": "/textbook/docs",
+      "versions": [
+        {
+          "name": "current",
+          "label": "Next",
+          "isLast": true,
+          "path": "/textbook/docs",
+          "mainDocId": "intro",
+          "docs": [
+            {
+              "id": "intro",
+              "path": "/textbook/docs/intro",
+              "sidebar": "textbookSidebar"
+            },
+            {
+              "id": "module1/index",
+              "path": "/textbook/docs/module1/",
+              "sidebar": "textbookSidebar"
+            },
+            {
+              "id": "module2/index",
+              "path": "/textbook/docs/module2/",
+              "sidebar": "textbookSidebar"
+            },
+            {
+              "id": "module3/index",
+              "path": "/textbook/docs/module3/",
+              "sidebar": "textbookSidebar"
+            },
+            {
+              "id": "module4/index",
+              "path": "/textbook/docs/module4/",
+              "sidebar": "textbookSidebar"
+            },
+            {
+              "id": "overview",
+              "path": "/textbook/docs/overview",
+              "sidebar": "textbookSidebar"
+            }
+          ],
+          "draftIds": [],
+          "sidebars": {
+            "textbookSidebar": {
+              "link": {
+                "path": "/textbook/docs/intro",
+                "label": "intro"
+              }
+            }
+          }
+        }
+      ],
+      "breadcrumbs": true
+    }
+  }
+}
