@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   test-deploy:
     name: Test deployment
@@ -45,4 +48,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
+          publish_branch: gh-pages  # Deploy to the gh-pages branch
           # By default, the deployment will be available at https://<USERNAME>.github.io/<REPOSITORY>
