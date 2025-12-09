@@ -29,8 +29,8 @@ export default {
     "experimental_router": "browser"
   },
   "url": "https://spec-ai.github.io",
-  "baseUrl": "/textbook/fr/",
-  "organizationName": "spec-ai",
+  "baseUrl": "/textbook/",
+  "organizationName": "MuhibAnwar",
   "projectName": "textbook",
   "trailingSlash": false,
   "onBrokenLinks": "throw",
@@ -59,18 +59,10 @@ export default {
       "classic",
       {
         "docs": {
-          "sidebarPath": "D:\\spec-ai\\Publicaltion\\TextBook\\sidebars.js",
+          "sidebarPath": "./sidebars.ts",
           "editUrl": "https://github.com/spec-ai/textbook/tree/main/",
           "remarkPlugins": [
             null
-          ],
-          "rehypePlugins": [
-            [
-              null,
-              {
-                "strict": false
-              }
-            ]
           ]
         },
         "blog": false,
@@ -84,7 +76,7 @@ export default {
     [
       "@docusaurus/plugin-pwa",
       {
-        "debug": false,
+        "debug": true,
         "offlineModeActivationStrategies": [
           "appInstalled",
           "standalone",

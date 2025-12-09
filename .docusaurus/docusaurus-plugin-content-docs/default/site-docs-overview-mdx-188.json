@@ -5,7 +5,7 @@
   "source": "@site/docs/overview.mdx",
   "sourceDirName": ".",
   "slug": "/overview",
-  "permalink": "/textbook/fr/docs/overview",
+  "permalink": "/textbook/docs/overview",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/spec-ai/textbook/tree/main/docs/overview.mdx",
@@ -17,10 +17,10 @@
   "sidebar": "textbookSidebar",
   "previous": {
     "title": "Introduction to Physical AI & Humanoid Robotics",
-    "permalink": "/textbook/fr/docs/intro"
+    "permalink": "/textbook/docs/intro"
   },
   "next": {
     "title": "Module 1: The Robotic Nervous System (ROS 2)",
-    "permalink": "/textbook/fr/docs/module1/"
+    "permalink": "/textbook/docs/module1/"
   }
 }

@@ -18,9 +18,9 @@ const config = {
   // For Vercel deployment, it is '/'
   baseUrl: '/',
 
-  // GitHub pages deployment config.
-  organizationName: 'spec-ai', // Usually your GitHub org/user name.
-  projectName: 'textbook', // Usually your repo name.
+  // GitHub pages deployment config
+  organizationName: 'MuhibAnwar', // Usually your GitHub org/user name.
+  projectName: 'Publication-GIAIC_HACKATHON_II', // Usually your repo name.
 
   trailingSlash: false,
 
@@ -55,7 +55,7 @@ const config = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl: 'https://github.com/spec-ai/textbook/tree/main/',
+          editUrl: 'https://github.com/MuhibAnwar/Publication-GIAIC_HACKATHON_II/tree/main/',
           // Math plugins are causing build issues on Vercel
           // remarkPlugins: [
           //   require('remark-math'),
@@ -72,52 +72,52 @@ const config = {
     ],
   ],
 
-  plugins: [
-    // Plugin for PWA
-    [
-      '@docusaurus/plugin-pwa',
-      {
-        debug: process.env.NODE_ENV === 'development',
-        offlineModeActivationStrategies: [
-          'appInstalled',
-          'standalone',
-          'queryString',
-        ],
-        pwaHead: [
-          {
-            tagName: 'link',
-            rel: 'icon',
-            href: '/img/docusaurus.png',
-          },
-          {
-            tagName: 'link',
-            rel: 'manifest',
-            href: '/manifest.json',
-          },
-          {
-            tagName: 'meta',
-            name: 'theme-color',
-            content: 'rgb(37, 194, 160)',
-          },
-          {
-            tagName: 'meta',
-            name: 'apple-mobile-web-app-title',
-            content: 'Physical AI & Humanoid Robotics',
-          },
-          {
-            tagName: 'meta',
-            name: 'apple-mobile-web-app-status-bar-style',
-            content: '#000',
-          },
-          {
-            tagName: 'link',
-            rel: 'apple-touch-icon',
-            href: '/img/docusaurus.png',
-          },
-        ],
-      },
-    ],
-  ],
+  // plugins: [
+  //   // Plugin for PWA
+  //   [
+  //     '@docusaurus/plugin-pwa',
+  //     {
+  //       debug: process.env.NODE_ENV === 'development',
+  //       offlineModeActivationStrategies: [
+  //         'appInstalled',
+  //         'standalone',
+  //         'queryString',
+  //       ],
+  //       pwaHead: [
+  //         {
+  //           tagName: 'link',
+  //           rel: 'icon',
+  //           href: '/img/docusaurus.png',
+  //         },
+  //         {
+  //           tagName: 'link',
+  //           rel: 'manifest',
+  //           href: '/manifest.json',
+  //         },
+  //         {
+  //           tagName: 'meta',
+  //           name: 'theme-color',
+  //           content: 'rgb(37, 194, 160)',
+  //         },
+  //         {
+  //           tagName: 'meta',
+  //           name: 'apple-mobile-web-app-title',
+  //           content: 'Physical AI & Humanoid Robotics',
+  //         },
+  //         {
+  //           tagName: 'meta',
+  //           name: 'apple-mobile-web-app-status-bar-style',
+  //           content: '#000',
+  //         },
+  //         {
+  //           tagName: 'link',
+  //           rel: 'apple-touch-icon',
+  //           href: '/img/docusaurus.png',
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // ],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
@@ -145,7 +145,7 @@ const config = {
             position: 'right',
           },
           {
-            href: 'https://github.com/spec-ai/textbook',
+            href: 'https://github.com/MuhibAnwar/Publication-GIAIC_HACKATHON_II',
             label: 'GitHub',
             position: 'right',
           },
@@ -201,7 +201,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/spec-ai/textbook',
+                href: 'https://github.com/MuhibAnwar/Publication-GIAIC_HACKATHON_II',
               },
             ],
           },
@@ -238,23 +238,6 @@ const config = {
       },
     }),
 
-  // Custom scripts to enhance functionality
-  scripts: [
-    {
-      src: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js',
-      async: true,
-    }
-  ],
-
-  // Custom stylesheets
-  stylesheets: [
-    {
-      href: 'https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css',
-      type: 'text/css',
-      integrity: 'sha384-odtC+0UGzzFL/6PNoE8rX/SPcQDXBJ+uRepguPXCnWcmSQRO8ATaeGAZ49A6A',
-      crossorigin: 'anonymous',
-    }
-  ]
 };
 
 module.exports = config;

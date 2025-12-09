@@ -5,7 +5,7 @@
   "source": "@site/docs/module3/index.mdx",
   "sourceDirName": "module3",
   "slug": "/module3/",
-  "permalink": "/textbook/fr/docs/module3/",
+  "permalink": "/textbook/docs/module3/",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/spec-ai/textbook/tree/main/docs/module3/index.mdx",
@@ -18,10 +18,10 @@
   "sidebar": "textbookSidebar",
   "previous": {
     "title": "Module 2: The Digital Twin (Gazebo & Unity)",
-    "permalink": "/textbook/fr/docs/module2/"
+    "permalink": "/textbook/docs/module2/"
   },
   "next": {
     "title": "Module 4: Vision-Language-Action (VLA)",
-    "permalink": "/textbook/fr/docs/module4/"
+    "permalink": "/textbook/docs/module4/"
   }
 }
