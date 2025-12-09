@@ -74,4 +74,4 @@ Muhib Anwar - [GitHub Profile](https://github.com/MuhibAnwar)
 
 ---
 
-*This textbook is part of an innovative curriculum designed to prepare students for the future of AI systems that operate in the physical world.*
+*This textbook is part of an innovative curriculum designed to prepare students for the future of AI systems that operate in the physical world.*"# Publication-GIAIC_HACKATHON_I" 
