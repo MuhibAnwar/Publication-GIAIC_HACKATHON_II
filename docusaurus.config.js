@@ -60,7 +60,7 @@ const config = {
             require('remark-math'),
           ],
           rehypePlugins: [
-            [require('rehype-katex'), { strict: false }],
+            [require('rehype-katex').default, { strict: false }],
           ],
         },
         blog: false, // Disable blog if not needed
