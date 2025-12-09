@@ -8,15 +8,15 @@ const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 const config = {
   title: 'Physical AI & Humanoid Robotics',
   tagline: 'Bridging the gap between the digital brain and the physical body',
-  url: 'https://your-domain.github.io', // Replace with your website URL
-  baseUrl: '/',
+  url: 'https://MuhibAnwar.github.io', // GitHub Pages URL
+  baseUrl: '/Publication-GIAIC_HACKATHON_II/', // The subpath of your site, e.g. /blog/.
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
 
   // GitHub pages deployment config.
-  organizationName: 'spec-ai', // Usually your GitHub org/user name.
-  projectName: 'textbook', // Usually your repo name.
+  organizationName: 'MuhibAnwar', // Usually your GitHub org/user name.
+  projectName: 'Publication-GIAIC_HACKATHON_II', // Usually your repo name.
   trailingSlash: false,
 
   i18n: {
