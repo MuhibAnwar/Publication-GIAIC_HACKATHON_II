@@ -1,6 +1,3 @@
-// @ts-check
-// Note: type annotations allow type checking and IDEs autocompletion
-
 const lightCodeTheme = require('prism-react-renderer').themes.github;
 const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 
@@ -8,17 +5,31 @@ const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 const config = {
   title: 'Physical AI & Humanoid Robotics',
   tagline: 'Bridging the gap between the digital brain and the physical body',
-  url: 'https://publication-giac-hackathon-ii.vercel.app', // Vercel deployment URL
-  baseUrl: '/', // Root path for Vercel deployment
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
 
-  // Vercel deployment configuration
-  organizationName: '', // Not needed for Vercel
-  projectName: '', // Not needed for Vercel
+  // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
+  future: {
+    v4: true, // Improve compatibility with the upcoming Docusaurus v4
+  },
+
+  // Set the production url of your site here
+  url: 'https://spec-ai.github.io',
+  // Set the /<baseUrl>/ pathname under which your site is served
+  // For GitHub pages deployment, it is often '/<projectName>/'
+  baseUrl: '/textbook/',
+
+  // GitHub pages deployment config.
+  organizationName: 'spec-ai', // Usually your GitHub org/user name.
+  projectName: 'textbook', // Usually your repo name.
+
   trailingSlash: false,
 
+  onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'warn',
+
+  // Even if you don't use internationalization, you can use this field to set
+  // useful metadata like html lang. For example, if your site is Chinese, you
+  // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'es', 'fr'], // Add more locales as needed
@@ -42,30 +53,22 @@ const config = {
       ({
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
+          // Please change this to your repo.
+          // Remove this to remove the "edit this page" links.
           editUrl: 'https://github.com/spec-ai/textbook/tree/main/',
           remarkPlugins: [
             require('remark-math'),
           ],
-          rehypePlugins: [
-            [require('rehype-katex'), { strict: false }],
-          ],
         },
         blog: false, // Disable blog if not needed
         theme: {
-          customCss: require.resolve('./src/css/custom.css'),
+          customCss: './src/css/custom.css',
         },
       }),
     ],
   ],
 
-  themes: [
-    // Add the classic preset as a theme as well to make sure components work properly
-    '@docusaurus/theme-classic',
-    '@docusaurus/theme-mermaid', // For diagrams
-  ],
-
   plugins: [
-    
     // Plugin for PWA
     [
       '@docusaurus/plugin-pwa',
@@ -110,23 +113,26 @@ const config = {
         ],
       },
     ],
-    
-    
   ],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      // Replace with your project's social card
+      image: 'img/docusaurus-social-card.jpg',
+      colorMode: {
+        respectPrefersColorScheme: true,
+      },
       navbar: {
-        title: '',
+        title: 'Physical AI & Humanoid Robotics',
         logo: {
-          alt: 'Physical AI & Humanoid Robotics Logo',
-          src: 'img/logo.svg',
+          alt: 'Physical AI Logo',
+          src: 'img/logo.svg', // Replace with your logo
         },
         items: [
           {
-            type: 'doc',
-            docId: 'intro',
+            type: 'docSidebar',
+            sidebarId: 'textbookSidebar',
             position: 'left',
             label: 'Textbook',
           },
@@ -135,7 +141,7 @@ const config = {
             position: 'right',
           },
           {
-            href: 'https://github.com/MuhibAnwar',
+            href: 'https://github.com/spec-ai/textbook',
             label: 'GitHub',
             position: 'right',
           },
@@ -191,7 +197,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/MuhibAnwar',
+                href: 'https://github.com/spec-ai/textbook',
               },
             ],
           },
@@ -201,33 +207,33 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-        additionalLanguages: ['python', 'bash', 'xml'],
+        additionalLanguages: ['python', 'bash'],
       },
-      
+
       // Algolia search configuration
       algolia: {
         // The application ID provided by Algolia
         appId: 'YOUR_APP_ID',
-        
+
         // Public API key: it is safe to commit it
         apiKey: 'YOUR_SEARCH_API_KEY',
-        
+
         indexName: 'physical-ai-humanoid-robotics',
-        
+
         // Optional: see doc section below
         contextualSearch: true,
-        
+
         // Optional: Specify domains where the navigation should occur through window.location instead on history.push. Useful when our Algolia config crawls multiple documentation sites and we want to navigate with window.location.href to them.
         externalUrlRegex: 'external\\.com|domain\\.com',
-        
+
         // Optional: Algolia search parameters
         searchParameters: {},
-        
+
         // Optional: path for search page that enabled by default (`false` to disable it)
         searchPagePath: 'search',
       },
     }),
-  
+
   // Custom scripts to enhance functionality
   scripts: [
     {
@@ -235,7 +241,7 @@ const config = {
       async: true,
     }
   ],
-  
+
   // Custom stylesheets
   stylesheets: [
     {
