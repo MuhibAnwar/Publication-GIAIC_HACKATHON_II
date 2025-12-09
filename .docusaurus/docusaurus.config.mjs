@@ -63,6 +63,14 @@ export default {
           "editUrl": "https://github.com/spec-ai/textbook/tree/main/",
           "remarkPlugins": [
             null
+          ],
+          "rehypePlugins": [
+            [
+              null,
+              {
+                "strict": false
+              }
+            ]
           ]
         },
         "blog": false,
