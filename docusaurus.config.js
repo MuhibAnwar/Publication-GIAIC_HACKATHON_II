@@ -8,8 +8,8 @@ const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 const config = {
   title: 'Physical AI & Humanoid Robotics',
   tagline: 'Bridging the gap between the digital brain and the physical body',
-  url: 'https://MuhibAnwar.github.io', // GitHub Pages base URL
-  baseUrl: '/Publication-GIAIC_HACKATHON_II/', // Base URL for GitHub Pages
+  url: 'https://muhibanwar.github.io', // GitHub Pages base URL (lowercase for consistency)
+  baseUrl: '/Publication-GIAIC_HACKATHON_II/', // Base URL for GitHub Pages (repository name)
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
