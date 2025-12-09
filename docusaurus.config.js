@@ -56,12 +56,13 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl: 'https://github.com/spec-ai/textbook/tree/main/',
-          remarkPlugins: [
-            require('remark-math'),
-          ],
-          rehypePlugins: [
-            require('rehype-katex'),
-          ],
+          // Math plugins are causing build issues on Vercel
+          // remarkPlugins: [
+          //   require('remark-math'),
+          // ],
+          // rehypePlugins: [
+          //   require('rehype-katex'),
+          // ],
         },
         blog: false, // Disable blog if not needed
         theme: {
