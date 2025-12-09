@@ -59,6 +59,9 @@ const config = {
           remarkPlugins: [
             require('remark-math'),
           ],
+          rehypePlugins: [
+            [require('rehype-katex'), { strict: false }],
+          ],
         },
         blog: false, // Disable blog if not needed
         theme: {
