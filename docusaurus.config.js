@@ -13,10 +13,10 @@ const config = {
   },
 
   // Set the production url of your site here
-  url: 'https://spec-ai.github.io',
+  url: 'https://publication-giac-hackathon-ii.vercel.app',
   // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/textbook/',
+  // For Vercel deployment, it is '/'
+  baseUrl: '/',
 
   // GitHub pages deployment config.
   organizationName: 'spec-ai', // Usually your GitHub org/user name.
@@ -60,7 +60,7 @@ const config = {
             require('remark-math'),
           ],
           rehypePlugins: [
-            [require('rehype-katex').default, { strict: false }],
+            require('rehype-katex'),
           ],
         },
         blog: false, // Disable blog if not needed
