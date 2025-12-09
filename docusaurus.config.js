@@ -13,16 +13,16 @@ const config = {
   },
 
   // Set the production url of your site here
-  url: 'https://publication-giac-hackathon-ii.vercel.app',
+  url: 'https://spec-ai.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
-  // For Vercel deployment, it is '/'
-  baseUrl: '/',
+  // For GitHub pages deployment, it is often '/<projectName>/'
+  baseUrl: '/textbook/',
 
-  // Vercel deployment config (GitHub settings preserved for potential dual deployment)
-  organizationName: 'MuhibAnwar', // Usually your GitHub org/user name.
-  projectName: 'Publication-GIAIC_HACKATHON_II', // Usually your repo name.
+  // GitHub pages deployment config.
+  organizationName: 'spec-ai', // Usually your GitHub org/user name.
+  projectName: 'textbook', // Usually your repo name.
 
-  trailingSlash: true, // Use trailing slashes for Vercel
+  trailingSlash: false,
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
